@@ -1,0 +1,22 @@
+flowchart LR
+    commander([Commander user])
+
+    subgraph legion[March of the Legion]
+        configure[UC1 Configure the run]
+        deploy[UC2 Deploy the legion]
+        sort[UC3 Sort the legion]
+        interact[UC4 Interact with the troops]
+        inspect[UC5 Inspect the battlefield]
+        report[UC6 Report a failure]
+    end
+
+    commander --> configure
+    commander --> deploy
+    commander --> sort
+    commander --> interact
+
+    deploy -.->|include| inspect
+    sort -.->|include| inspect
+    interact -.->|include| inspect
+    configure -.->|extend| report
+    interact -.->|extend| report

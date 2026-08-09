@@ -1,0 +1,208 @@
+classDiagram
+    direction LR
+
+    class Troops {
+        +main(String[] arguments)$ void
+    }
+
+    class LegionApplication {
+        -ConsoleWriter console
+        -ExceptionHandler handler
+        -ParameterParser parser
+        -ParameterValidator validator
+        -RandomDeployer deployer
+        -FormationArranger arranger
+        +run(String[] arguments) void
+    }
+
+    class ConsoleWriter {
+        +writeLine(String text) void
+        +writeTitle(String title) void
+        +writeLightSeparator() void
+        +writeHeavySeparator() void
+        +writeFailure(String code, String message) void
+    }
+
+    class LegionException {
+        <<abstract>>
+        -String code
+        +getCode() String
+    }
+    class InvalidAlgorithmException
+    class BattlefieldSizeException
+    class InvalidCommandException
+    class InvalidParameterException
+    class ExceptionHandler {
+        +handle(Throwable failure) void
+    }
+
+    class LaunchParameters {
+        -SortingAlgorithm algorithm
+        -SortDirection direction
+        -Orientation orientation
+        -Map~TroopType, Integer~ troopCounts
+        -int fieldSize
+        +getTotalTroops() int
+    }
+    class ParameterParser {
+        +parse(String[] arguments) LaunchParameters
+    }
+    class InteractiveParameterReader {
+        +read() LaunchParameters
+    }
+    class ParameterValidator {
+        +validate(LaunchParameters parameters) void
+    }
+
+    class Movable {
+        <<interface>>
+        +moveFrom(Position origin, int steps) Position
+        +getMovementRange() int
+        +describeMovement() String
+    }
+    class Attackable {
+        <<interface>>
+        +attack(Troop target) int
+        +getAttackPower() int
+    }
+    class Healable {
+        <<interface>>
+        +heal(Troop target) int
+        +getHealingPower() int
+    }
+
+    class Troop {
+        <<abstract>>
+        -String identifier
+        -TroopType type
+        -int maximumHealth
+        -int health
+        #Troop(TroopType type, int number, int health)
+        +receiveDamage(int damage) void
+        +receiveHealing(int amount) void
+        +getStatus() String
+    }
+    class Commander
+    class Medic
+    class Infantry
+    class TroopType {
+        <<enumeration>>
+        COMMANDER
+        MEDIC
+        INFANTRY
+        TANK
+        SNIPER
+    }
+    class TroopFactory {
+        +create(TroopType type, int number) Troop
+    }
+
+    class Battlefield {
+        -int size
+        -Troop[][] cells
+        +place(Position position, Troop troop) void
+        +isOccupied(Position position) boolean
+        +locate(String identifier) Position
+        +clear() void
+    }
+    class Position {
+        <<record>>
+        +int x
+        +int y
+        +shift(int deltaX, int deltaY) Position
+    }
+    class BattlefieldRenderer {
+        +render(Battlefield battlefield, String title) void
+    }
+    class RandomDeployer {
+        +deploy(Battlefield battlefield, Map counts) List~Troop~
+    }
+    class FormationArranger {
+        +arrange(Battlefield battlefield, List~Troop~ sorted, Orientation orientation) void
+    }
+    class Orientation {
+        <<enumeration>>
+        NORTH
+        SOUTH
+        EAST
+        WEST
+    }
+
+    class SortingStrategy {
+        <<interface>>
+        +sort(List~Troop~ troops) List~Troop~
+        +getName() String
+    }
+    class BubbleSortStrategy
+    class InsertionSortStrategy
+    class QuickSortStrategy
+    class MergeSortStrategy
+    class SortingAlgorithm {
+        <<enumeration>>
+        BUBBLE
+        INSERTION
+        QUICK
+        MERGE
+        HEAP
+        COUNTING
+        RADIX
+        +createStrategy() SortingStrategy
+    }
+    class SortDirection {
+        <<enumeration>>
+        ASCENDING
+        DESCENDING
+        +apply(List~Troop~ ascending) List~Troop~
+    }
+
+    class GameLoop {
+        +run() void
+    }
+
+    LegionException <|-- InvalidAlgorithmException
+    LegionException <|-- BattlefieldSizeException
+    LegionException <|-- InvalidCommandException
+    LegionException <|-- InvalidParameterException
+
+    Troop <|-- Commander
+    Troop <|-- Medic
+    Troop <|-- Infantry
+    Troop ..|> Movable
+    Commander ..|> Attackable
+    Infantry ..|> Attackable
+    Medic ..|> Healable
+
+    BubbleSortStrategy ..|> SortingStrategy
+    InsertionSortStrategy ..|> SortingStrategy
+    QuickSortStrategy ..|> SortingStrategy
+    MergeSortStrategy ..|> SortingStrategy
+
+    Troops --> LegionApplication
+    Troops --> ExceptionHandler
+    LegionApplication *-- ParameterParser
+    LegionApplication *-- ParameterValidator
+    LegionApplication *-- RandomDeployer
+    LegionApplication *-- FormationArranger
+    LegionApplication --> InteractiveParameterReader
+    LegionApplication --> LaunchParameters
+    LegionApplication --> Battlefield
+    LegionApplication --> BattlefieldRenderer
+    LegionApplication --> GameLoop
+    LegionApplication --> SortingStrategy
+    ExceptionHandler --> ConsoleWriter
+    ExceptionHandler --> LegionException
+    RandomDeployer *-- TroopFactory
+    TroopFactory --> Troop
+    TroopFactory --> TroopType
+    Troop --> TroopType
+    Battlefield o-- Troop
+    Battlefield --> Position
+    BattlefieldRenderer --> Battlefield
+    FormationArranger --> Orientation
+    GameLoop --> Battlefield
+    GameLoop --> BattlefieldRenderer
+    GameLoop --> ExceptionHandler
+    SortingAlgorithm --> SortingStrategy
+    LaunchParameters --> SortingAlgorithm
+    LaunchParameters --> SortDirection
+    LaunchParameters --> Orientation
