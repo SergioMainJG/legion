@@ -3,6 +3,7 @@
 Simulador de estrategia por consola escrito en **Java 17**. El proyecto se compila con `javac` mediante los scripts `build.sh` y `run.sh` incluidos en la raíz.
 
 El programa recibe una configuración (algoritmo de ordenamiento, sentido del orden, orientación de la formación, cantidad de tropas y tamaño del campo), despliega la legión en posiciones aleatorias sin colisiones sobre una matriz cuadrada, ordena las unidades por sus puntos de vida usando el algoritmo elegido, reorganiza el campo dejando un tipo de tropa por línea y finalmente entrega el control a una sesión interactiva donde el usuario comanda a las unidades escribiendo comandos.
+
 ---
 
 ## Cómo ejecutar
