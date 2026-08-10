@@ -397,35 +397,6 @@ grep -rn "catch" src/ | wc -l   # 2
 
 ---
 
-## Milestone Status
-
-### Implemented and Working
-
-- [x] Java project `legion` compilable with `javac` via `build.sh`.
-- [x] Key-value CLI parameter parsing and interactive mode with `Scanner`.
-- [x] Validation for algorithm, direction, orientation, troop counts, and field capacity.
-- [x] OOP hierarchy: abstract `Troop`, `private` attributes, `protected` constructor, three concrete units.
-- [x] Behavioral interfaces (`Movable`, `Attackable`, `Healable`) injected per unit type.
-- [x] Factory pattern (`TroopFactory`) and Strategy pattern (`SortingStrategy` + `SortingAlgorithm`).
-- [x] Configurable battlefield matrix, random deployment without collisions, and map rendering with legend.
-- [x] Bubble Sort and Insertion Sort implemented, with execution timing measured via `System.nanoTime()`.
-- [x] Final formation layout holding one troop type per line supporting four orientations.
-- [x] Centralized exception handling with custom exception hierarchy and codes.
-- [x] `GameLoop` supporting `move`, `attack`, `heal`, `status`, `help`, and `exit`.
-- [x] Class diagram and use case diagram created in Mermaid.
-
-### Declared as Stubs for Milestone 2
-
-- [ ] `QuickSortStrategy`, `MergeSortStrategy`, `HeapSortStrategy`, `CountingSortStrategy`, `RadixSortStrategy`: classes declared and registered in enum, `sort()` throws `UnsupportedOperationException`.
-- [ ] Unit types `TANK` and `SNIPER`: present in `TroopType`, explicitly rejected in `TroopFactory`.
-- [ ] `attack` and `heal` in `GameLoop` validate interface capabilities while printing simulated actions.
-- [ ] Performance benchmarks comparing sorting algorithms.
-- [ ] Turn system, factions, and AI behavior.
-- [ ] Command pattern with dynamic registration and fuzzy command matching.
-- [ ] Logging channel writing to `error.log`.
-
----
-
 ## Execution Logs (15 Executions)
 
 The following section documents 15 actual executions of the system covering successful workflows with various configurations (algorithms, directions, orientations, dimensions, and modes) as well as error handling verification.

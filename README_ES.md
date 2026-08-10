@@ -395,35 +395,6 @@ grep -rn "catch" src/ | wc -l   # 2
 
 ---
 
-## Estado del milestone
-
-### Funcionando
-
-- [x] Proyecto Java `legion` compilable con `javac` mediante `build.sh`.
-- [x] Parseo de parámetros `clave=valor` y modo interactivo con `Scanner`.
-- [x] Validación de algoritmo, sentido, orientación, cantidades y capacidad del campo.
-- [x] Jerarquía POO: `Troop` abstracta, atributos `private`, constructor `protected`, tres unidades concretas.
-- [x] Interfaces `Movable`, `Attackable` y `Healable` inyectadas por unidad.
-- [x] Patrones Factory (`TroopFactory`) y Strategy (`SortingStrategy` + `SortingAlgorithm`).
-- [x] Campo de batalla con matriz configurable, despliegue aleatorio sin colisiones y render con leyenda.
-- [x] Bubble Sort e Insertion Sort implementados, con medición en `System.nanoTime()`.
-- [x] Formación final con un tipo de tropa por línea y cuatro orientaciones.
-- [x] Manejo centralizado de excepciones con jerarquía propia y códigos.
-- [x] `GameLoop` con `move`, `attack`, `heal`, `status`, `help` y `exit`.
-- [x] Diagrama de clases y diagrama de casos de uso en Mermaid.
-
-### Declarado como stub para la segunda entrega
-
-- [ ] `QuickSortStrategy`, `MergeSortStrategy`, `HeapSortStrategy`, `CountingSortStrategy`, `RadixSortStrategy`: la clase existe y está registrada en el enum, `sort()` lanza `UnsupportedOperationException`.
-- [ ] Tipos `TANK` y `SNIPER`: presentes en `TroopType`, rechazados explícitamente en `TroopFactory`.
-- [ ] `attack` y `heal` del `GameLoop` validan la habilidad por interfaz pero imprimen una acción simulada.
-- [ ] Comparativa de performance entre algoritmos.
-- [ ] Sistema de turnos, bandos e IA.
-- [ ] Patrón Command con registro dinámico y sugerencia de comando cercano.
-- [ ] Logger a archivo `error.log`.
-
----
-
 ## Ejecuciones de Prueba (15 Executions)
 
 A continuación se documentan 15 ejecuciones reales del sistema cubriendo flujos exitosos con distintas configuraciones (algoritmos, sentidos, orientaciones, dimensiones y modos) así como la verificación del manejo de excepciones.
