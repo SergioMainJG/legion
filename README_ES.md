@@ -51,7 +51,11 @@ java -cp out legion.Troops a=m t=d o=e u=2,1,3
 | `u` | Cantidad de unidades por tipo, en el orden `comandante, médico, tanque, sniper, infantería, ingeniero, artillería, antiaérea` | De 1 a 8 enteros separados por coma, por ejemplo `1,1,2`; los tipos finales que falten valen `0` | Sí |
 | `f` | Lado de la matriz cuadrada | Entero entre 5 y 1000 | No, por defecto `10` |
 
-El orden se calcula siempre sobre el rango de ataque de la unidad mediante un único comparador compartido (`TroopComparator.BY_RANGE`), de modo que todos los algoritmos producen exactamente el mismo resultado para la misma entrada. El sentido `t` es una transformación de ese resultado, nunca un segundo algoritmo. La orientación decide si los grupos ordenados se apilan en filas (`n`, `s`) o en columnas (`e`, `w`) y desde qué borde crece la formación.
+El orden se calcula siempre sobre el rango de ataque de la unidad mediante un único comparador compartido (`TroopComparator.BY_RANGE`), de modo que todos los algoritmos producen exactamente el mismo resultado para la misma entrada. La orientación decide si los grupos ordenados se apilan en filas (`n`, `s`) o en columnas (`e`, `w`) y desde qué borde crece la formación.
+
+### Decisión sobre `t`
+
+El material del proyecto ha usado `t` con dos significados a lo largo de las etapas. Para la entrega final `t` es el **sentido del orden** (`c` creciente, `d` decreciente), que es el significado aprobado en el midterm. Se aplica como una única inversión de la lista ya ordenada en `SortDirection.apply`, nunca como un segundo algoritmo. Cualquier valor distinto de `c` o `d` se rechaza con `E-PARAM`. Parser, validador, `SortDirection`, mensajes de consola, este README y las pruebas usan este único significado.
 
 ---
 
@@ -473,7 +477,7 @@ grep -rn "catch" src/ | wc -l   # 2
 | `E-ALG` | `InvalidAlgorithmException` | Clave de algoritmo que no está en el catálogo | `Unknown sorting algorithm: z` |
 | `E-FIELD` | `BattlefieldSizeException` | Tamaño fuera de `[5, 1000]`, tropas sobre la capacidad, grupo más ancho que una línea, más grupos que líneas o colisión de celda | `The battlefield holds 25 cells and 40 troops were requested.` |
 | `E-CMD` | `InvalidCommandException` | Comando desconocido, argumentos faltantes, destino ocupado o unidad sin la habilidad pedida | `Destination (0, 2) is already occupied.` |
-| `E-PARAM` | `InvalidParameterException` | Par `clave=valor` mal formado, clave duplicada, parámetro obligatorio ausente, valor de `t`/`o` desconocido o valor no numérico | `Duplicated parameter: a. Each parameter must appear once.` |
+| `E-PARAM` | `InvalidParameterException` | Par `clave=valor` mal formado, clave de parámetro desconocida, clave duplicada, parámetro obligatorio ausente, valor de `t`/`o` desconocido, cantidad no numérica o negativa, o configuración de tropas toda en cero | `Unknown parameter: x. Expected a, t, o, u or f.` |
 | `E-UNEXPECTED` | Cualquier `RuntimeException` no prevista | Falla no contemplada por el dominio | `Unexpected failure. The operation was cancelled.` |
 
 ---
@@ -597,15 +601,32 @@ A line holds 6 units and 13 Infantry were requested.
 ### 8. Tamaño de campo por defecto
 **Comando:** `./run.sh a=b t=c o=s u=1,1,1` produce un campo `10x10` porque `f` se omite.
 
+### 9. Error: parámetro desconocido
+**Comando:** `./run.sh a=b t=c o=s u=1,1,1 x=9 f=6`
+
+```text
+==============================================================
+ERROR E-PARAM
+Unknown parameter: x. Expected a, t, o, u or f.
+==============================================================
+```
+
 ---
 
 ## Pruebas reproducibles
 
 `./test.sh` compila `src` y `test` juntos y ejecuta `legion.test.TestRunner`,
-un arnés sin dependencias (el Capstone prohíbe herramientas de build). Cubre el
-parser, el validador, las ocho estrategias de ordenamiento (incluida la garantía
-de que todas devuelven el mismo orden), la matriz del campo y las cuatro
-orientaciones de la formación. Estado actual: **81 verificaciones, 0 fallos**.
+un arnés sin dependencias (el Capstone prohíbe herramientas de build). Cubre:
+
+- **parser** — línea válida, parámetro ausente/desconocido/duplicado, `clave=valor` mal formado, algoritmo/sentido/orientación inválidos, cantidades no numéricas y negativas, claves y valores de enum sin distinción de mayúsculas;
+- **validador** — tamaño de campo `[5, 1000]` incluidos ambos límites, campo exactamente lleno, capacidad excedida, grupo más ancho que una línea, demasiados grupos, configuración vacía;
+- **ordenamiento** — cada una de las ocho estrategias con datasets mixto, vacío, único, ordenado, invertido, de rango igual, de rango mínimo y máximo y grande; las ocho coinciden en el mismo orden creciente y decreciente; cada estrategia ordena por rango y no por vida;
+- **battlefield** — límites, colocación exclusiva, límites de tamaño;
+- **formación** — las cuatro orientaciones, un tipo por línea, un solo tipo, capacidad exacta de línea, identidad preservada;
+- **despliegue** — sin posición repetida, cada tropa colocada una vez, campos pequeños y grandes, nada perdido ni renombrado tras ordenamiento y formación;
+- **regresión** — un comando estilo midterm sigue ejecutando el flujo completo y los comportamientos aprobados siguen vigentes.
+
+Estado actual: **133 verificaciones, 0 fallos**.
 
 ---
 
@@ -672,5 +693,7 @@ legion/
     ├── ValidatorTests.java
     ├── SortingTests.java
     ├── BattlefieldTests.java
-    └── FormationTests.java
+    ├── FormationTests.java
+    ├── DeploymentTests.java
+    └── RegressionTests.java
 ```

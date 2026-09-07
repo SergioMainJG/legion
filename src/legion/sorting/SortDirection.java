@@ -8,8 +8,12 @@ import legion.troops.Troop;
 
 /**
  * Direction applied to the result of a sorting strategy.
- * The strategies always produce an ascending list, so the descending
- * case is resolved by reversing the result once.
+ * The command line parameter {@code t} selects this direction:
+ * {@code c} for ascending and {@code d} for descending. This is the
+ * interpretation adopted for the final delivery and it matches the
+ * behaviour approved in the midterm. The strategies always produce an
+ * ascending list, so the descending case is resolved by reversing the
+ * result once instead of running a second algorithm.
  */
 public enum SortDirection {
 

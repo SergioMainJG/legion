@@ -2,6 +2,7 @@ package legion.setup;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import legion.battlefield.Battlefield;
 import legion.battlefield.Orientation;
 import legion.errors.types.InvalidParameterException;
@@ -25,6 +26,8 @@ public class ParameterParser {
     private static final String FIELD_KEY = "f";
     private static final String NUMBER_PATTERN = "\\d+";
     private static final int PAIR_PARTS = 2;
+    private static final Set<String> KNOWN_KEYS =
+            Set.of(ALGORITHM_KEY, DIRECTION_KEY, ORIENTATION_KEY, UNITS_KEY, FIELD_KEY);
 
     /**
      * Parses the arguments received by the entry point.
@@ -51,6 +54,10 @@ public class ParameterParser {
                 throw new InvalidParameterException("Malformed parameter: " + argument + ". Expected key=value.");
             }
             String key = parts[0].trim().toLowerCase();
+            if (!KNOWN_KEYS.contains(key)) {
+                throw new InvalidParameterException("Unknown parameter: " + key
+                        + ". Expected a, t, o, u or f.");
+            }
             if (pairs.containsKey(key)) {
                 throw new InvalidParameterException("Duplicated parameter: " + key
                         + ". Each parameter must appear once.");

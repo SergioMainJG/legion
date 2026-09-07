@@ -51,7 +51,11 @@ java -cp out legion.Troops a=m t=d o=e u=2,1,3
 | `u` | Unit counts by type, in the order `commander, medic, tank, sniper, infantry, engineer, artillery, antiAircraft` | 1 to 8 comma-separated integers, for example `1,1,2`; missing trailing types default to `0` | Yes |
 | `f` | Side length of the square matrix | Integer between 5 and 1000 | No, defaults to `10` |
 
-Sorting is always calculated on the unit attack range through a single shared comparator (`TroopComparator.BY_RANGE`), so every algorithm produces exactly the same order for the same input. The direction `t` is a transformation applied to that result, never a second algorithm. Orientation determines whether sorted groups are stacked in rows (`n`, `s`) or columns (`e`, `w`) and from which border the formation expands.
+Sorting is always calculated on the unit attack range through a single shared comparator (`TroopComparator.BY_RANGE`), so every algorithm produces exactly the same order for the same input. Orientation determines whether sorted groups are stacked in rows (`n`, `s`) or columns (`e`, `w`) and from which border the formation expands.
+
+### Decision on `t`
+
+The project material has used `t` with two different meanings across stages. For the final delivery `t` is the **sort direction** (`c` ascending, `d` descending), which is the meaning approved in the midterm. It is applied as a single reversal of the already-sorted list in `SortDirection.apply`, never as a second algorithm. Any argument other than `c` or `d` is rejected with `E-PARAM`. Parser, validator, `SortDirection`, console messages, this README, and the tests all use this one meaning.
 
 ---
 
@@ -473,7 +477,7 @@ grep -rn "catch" src/ | wc -l   # 2
 | `E-ALG` | `InvalidAlgorithmException` | Algorithm key not in the catalogue | `Unknown sorting algorithm: z` |
 | `E-FIELD` | `BattlefieldSizeException` | Field size out of `[5, 1000]`, troop count over capacity, group wider than a line, more groups than lines, or a cell collision | `The battlefield holds 25 cells and 40 troops were requested.` |
 | `E-CMD` | `InvalidCommandException` | Unknown command, missing arguments, occupied destination, or unit lacking the requested ability | `Destination (0, 2) is already occupied.` |
-| `E-PARAM` | `InvalidParameterException` | Malformed `key=value` pair, duplicated key, missing required parameter, unknown `t`/`o` value, or non-numeric value | `Duplicated parameter: a. Each parameter must appear once.` |
+| `E-PARAM` | `InvalidParameterException` | Malformed `key=value` pair, unknown parameter key, duplicated key, missing required parameter, unknown `t`/`o` value, non-numeric or negative quantity, or an all-zero troop configuration | `Unknown parameter: x. Expected a, t, o, u or f.` |
 | `E-UNEXPECTED` | Any unhandled `RuntimeException` | Failure not modelled by the domain | `Unexpected failure. The operation was cancelled.` |
 
 ---
@@ -597,15 +601,32 @@ A line holds 6 units and 13 Infantry were requested.
 ### 8. Default field size
 **Command:** `./run.sh a=b t=c o=s u=1,1,1` produces a `10x10` battlefield because `f` is omitted.
 
+### 9. Error: unknown parameter
+**Command:** `./run.sh a=b t=c o=s u=1,1,1 x=9 f=6`
+
+```text
+==============================================================
+ERROR E-PARAM
+Unknown parameter: x. Expected a, t, o, u or f.
+==============================================================
+```
+
 ---
 
 ## Reproducible Checks
 
 `./test.sh` compiles `src` and `test` together and runs `legion.test.TestRunner`,
-a dependency-free harness (the Capstone forbids build tools). It covers the
-parser, the validator, the eight sorting strategies (including the guarantee
-that they all return the same order), the battlefield matrix, and the four
-formation orientations. Current status: **81 checks, 0 failures**.
+a dependency-free harness (the Capstone forbids build tools). It covers:
+
+- **parser** — valid line, missing/unknown/duplicated parameter, malformed `key=value`, invalid algorithm/direction/orientation, non-numeric and negative quantities, case-insensitive keys and enum values;
+- **validator** — field size `[5, 1000]` including both bounds, exactly-full battlefield, capacity exceeded, group wider than a line, too many groups, empty configuration;
+- **sorting** — every one of the eight strategies on mixed, empty, single, sorted, reversed, equal-range, min/max-range and large datasets; all eight agree on the same ascending and descending order; every strategy orders by range and not by health;
+- **battlefield** — bounds, exclusive placement, size limits;
+- **formation** — the four orientations, one type per line, single type, exact line capacity, identity preserved;
+- **deployment** — no repeated position, every troop placed once, small and large fields, nothing lost or renamed through sorting and formation;
+- **regression** — a midterm-style command still runs the full pipeline and the previously approved behaviours still hold.
+
+Current status: **133 checks, 0 failures**.
 
 ---
 
@@ -672,5 +693,7 @@ legion/
     ├── ValidatorTests.java
     ├── SortingTests.java
     ├── BattlefieldTests.java
-    └── FormationTests.java
+    ├── FormationTests.java
+    ├── DeploymentTests.java
+    └── RegressionTests.java
 ```

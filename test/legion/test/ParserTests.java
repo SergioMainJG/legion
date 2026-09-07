@@ -45,5 +45,24 @@ public class ParserTests {
         report.expectFailure("parser rejects a non numeric count",
                 InvalidParameterException.class,
                 () -> parser.parse(new String[] {"a=b", "t=c", "o=s", "u=1,x"}));
+        report.expectFailure("parser rejects a negative count",
+                InvalidParameterException.class,
+                () -> parser.parse(new String[] {"a=b", "t=c", "o=s", "u=1,-2"}));
+        report.expectFailure("parser rejects an unknown parameter",
+                InvalidParameterException.class,
+                () -> parser.parse(new String[] {"a=b", "t=c", "o=s", "u=1", "x=5"}));
+        report.expectFailure("parser rejects an unknown sort direction value",
+                InvalidParameterException.class,
+                () -> parser.parse(new String[] {"a=b", "t=x", "o=s", "u=1"}));
+        report.expectFailure("parser rejects an unknown orientation value",
+                InvalidParameterException.class,
+                () -> parser.parse(new String[] {"a=b", "t=c", "o=x", "u=1"}));
+        report.expectFailure("parser rejects a non numeric field size",
+                InvalidParameterException.class,
+                () -> parser.parse(new String[] {"a=b", "t=c", "o=s", "u=1", "f=big"}));
+        report.check("parser is case insensitive for keys and enum values", () -> {
+            LaunchParameters parameters = parser.parse(new String[] {"A=B", "T=C", "O=S", "U=1,1"});
+            return parameters.getTotalTroops() == 2;
+        });
     }
 }

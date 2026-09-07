@@ -36,8 +36,14 @@ public class BattlefieldTests {
                 });
         report.check("battlefield reports its total capacity", () ->
                 new Battlefield(7).getCapacity() == 49);
+        report.check("battlefield accepts the minimum size", () ->
+                new Battlefield(Battlefield.MINIMUM_SIZE).getSize() == 5);
+        report.check("battlefield accepts the maximum size", () ->
+                new Battlefield(Battlefield.MAXIMUM_SIZE).getSize() == 1000);
         report.expectFailure("battlefield rejects a size below the minimum",
                 BattlefieldSizeException.class, () -> new Battlefield(4));
+        report.expectFailure("battlefield rejects a size above the maximum",
+                BattlefieldSizeException.class, () -> new Battlefield(1001));
     }
 
     private Troop troop() {

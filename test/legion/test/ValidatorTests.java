@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import legion.battlefield.Orientation;
 import legion.errors.types.BattlefieldSizeException;
+import legion.errors.types.InvalidParameterException;
 import legion.setup.LaunchParameters;
 import legion.setup.ParameterValidator;
 import legion.sorting.SortDirection;
@@ -27,6 +28,18 @@ public class ValidatorTests {
             validator.validate(parameters(6, 1, 1, 2));
             return true;
         });
+        report.check("validator accepts the minimum field size of five", () -> {
+            validator.validate(parameters(5, 1, 1, 1));
+            return true;
+        });
+        report.check("validator accepts the maximum field size of one thousand", () -> {
+            validator.validate(parameters(1000, 2, 2, 2));
+            return true;
+        });
+        report.check("validator accepts a battlefield filled to the last cell", () -> {
+            validator.validate(parameters(5, 5, 5, 5, 5, 5));
+            return true;
+        });
         report.expectFailure("validator rejects a field smaller than five",
                 BattlefieldSizeException.class, () -> validator.validate(parameters(4, 1, 1, 1)));
         report.expectFailure("validator rejects a field larger than one thousand",
@@ -37,6 +50,8 @@ public class ValidatorTests {
                 BattlefieldSizeException.class, () -> validator.validate(parameters(6, 1, 1, 13)));
         report.expectFailure("validator rejects more groups than lines",
                 BattlefieldSizeException.class, () -> validator.validate(parameters(5, 1, 1, 1, 1, 1, 1)));
+        report.expectFailure("validator rejects an empty troop configuration",
+                InvalidParameterException.class, () -> validator.validate(parameters(6, 0, 0, 0)));
     }
 
     private LaunchParameters parameters(int fieldSize, int... counts) {
