@@ -626,7 +626,9 @@ un arnés sin dependencias (el Capstone prohíbe herramientas de build). Cubre:
 - **despliegue** — sin posición repetida, cada tropa colocada una vez, campos pequeños y grandes, nada perdido ni renombrado tras ordenamiento y formación;
 - **regresión** — un comando estilo midterm sigue ejecutando el flujo completo y los comportamientos aprobados siguen vigentes.
 
-Estado actual: **133 verificaciones, 0 fallos**.
+Estado actual: **133 verificaciones, 0 fallos**. Una corrida completa de la
+suite automática más una batería manual de 44 escenarios por CLI (entradas y
+salidas) está registrada en [`docs/TEST-RESULTS.md`](docs/TEST-RESULTS.md).
 
 ---
 
@@ -641,6 +643,7 @@ legion/
 ├── README_ES.md
 ├── docs/
 │   ├── TRACEABILITY.md
+│   ├── TEST-RESULTS.md
 │   └── diagrams/
 │       ├── class-diagram.mmd
 │       ├── use-case-diagram.mmd

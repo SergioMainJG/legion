@@ -626,7 +626,9 @@ a dependency-free harness (the Capstone forbids build tools). It covers:
 - **deployment** — no repeated position, every troop placed once, small and large fields, nothing lost or renamed through sorting and formation;
 - **regression** — a midterm-style command still runs the full pipeline and the previously approved behaviours still hold.
 
-Current status: **133 checks, 0 failures**.
+Current status: **133 checks, 0 failures**. A full run of the automated suite
+plus a 44-scenario manual CLI battery (inputs and outputs) is recorded in
+[`docs/TEST-RESULTS.md`](docs/TEST-RESULTS.md).
 
 ---
 
@@ -641,6 +643,7 @@ legion/
 ├── README_ES.md
 ├── docs/
 │   ├── TRACEABILITY.md
+│   ├── TEST-RESULTS.md
 │   └── diagrams/
 │       ├── class-diagram.mmd
 │       ├── use-case-diagram.mmd
