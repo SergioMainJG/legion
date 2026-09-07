@@ -12,8 +12,20 @@ import legion.troops.Troop;
  */
 public class Battlefield {
 
-    private static final int MINIMUM_SIZE = 2;
-    private static final int MAXIMUM_SIZE = 1000;
+    /**
+     * Smallest side length accepted for the matrix.
+     */
+    public static final int MINIMUM_SIZE = 5;
+
+    /**
+     * Largest side length accepted for the matrix.
+     */
+    public static final int MAXIMUM_SIZE = 1000;
+
+    /**
+     * Side length used when the parameter f is omitted.
+     */
+    public static final int DEFAULT_SIZE = 10;
 
     private final int size;
     private final Troop[][] cells;
@@ -75,10 +87,14 @@ public class Battlefield {
      * @param position destination coordinate
      * @param troop    unit to place
      * @throws BattlefieldSizeException when the cell is outside the matrix
+     *                                  or is already occupied
      */
     public void place(Position position, Troop troop) {
         if (!contains(position)) {
             throw new BattlefieldSizeException("Position " + position + " is outside the battlefield.");
+        }
+        if (cells[position.y()][position.x()] != null) {
+            throw new BattlefieldSizeException("Position " + position + " is already occupied.");
         }
         cells[position.y()][position.x()] = troop;
     }

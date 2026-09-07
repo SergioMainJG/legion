@@ -135,6 +135,10 @@ public class GameLoop {
         Troop troop = requireTroop(arguments[1]);
         Position origin = battlefield.locate(troop.getIdentifier());
         Position destination = troop.moveFrom(origin, requireNumber(arguments[2]));
+        if (destination.equals(origin)) {
+            console.writeLine(troop.getIdentifier() + " held its position at " + origin);
+            return;
+        }
         validateDestination(destination);
         battlefield.release(origin);
         battlefield.place(destination, troop);

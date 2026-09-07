@@ -4,15 +4,17 @@ import legion.errors.types.InvalidParameterException;
 
 /**
  * Side of the battlefield where the final formation is built.
- * The orientation decides whether the sorted groups are stacked in
- * rows or in columns and from which edge they grow.
+ * North and south stack the sorted groups as rows, east and west as
+ * columns. North grows from the south edge upwards, south from the
+ * north edge downwards, east from the west edge rightwards and west
+ * from the east edge leftwards.
  */
 public enum Orientation {
 
-    NORTH("n", "north", false, false),
-    SOUTH("s", "south", false, true),
-    WEST("w", "west", true, false),
-    EAST("e", "east", true, true);
+    NORTH("n", "north", false, true),
+    SOUTH("s", "south", false, false),
+    WEST("w", "west", true, true),
+    EAST("e", "east", true, false);
 
     private final String key;
     private final String label;

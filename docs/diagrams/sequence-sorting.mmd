@@ -1,0 +1,35 @@
+sequenceDiagram
+    actor User
+    participant Troops
+    participant LegionApplication
+    participant ParameterParser
+    participant ParameterValidator
+    participant RandomDeployer
+    participant SortingAlgorithm
+    participant SortingStrategy
+    participant TroopComparator
+    participant SortDirection
+    participant FormationArranger
+    participant BattlefieldRenderer
+
+    User->>Troops: main(a, t, o, u, f)
+    Troops->>LegionApplication: run(arguments)
+    LegionApplication->>ParameterParser: parse(arguments)
+    ParameterParser-->>LegionApplication: LaunchParameters
+    LegionApplication->>ParameterValidator: validate(parameters)
+    LegionApplication->>RandomDeployer: deploy(battlefield, counts)
+    RandomDeployer-->>LegionApplication: List~Troop~
+    LegionApplication->>BattlefieldRenderer: render(initial deployment)
+    LegionApplication->>SortingAlgorithm: createStrategy()
+    SortingAlgorithm-->>LegionApplication: SortingStrategy
+    LegionApplication->>LegionApplication: start = System.nanoTime()
+    LegionApplication->>SortingStrategy: sort(troops)
+    SortingStrategy->>TroopComparator: BY_RANGE.compare(a, b)
+    TroopComparator-->>SortingStrategy: order
+    SortingStrategy-->>LegionApplication: ascending list
+    LegionApplication->>LegionApplication: elapsed = System.nanoTime() - start
+    LegionApplication->>SortDirection: apply(ascending)
+    SortDirection-->>LegionApplication: ordered list
+    LegionApplication->>FormationArranger: arrange(battlefield, ordered, orientation)
+    LegionApplication->>BattlefieldRenderer: render(final formation)
+    LegionApplication->>User: sorting report and metrics

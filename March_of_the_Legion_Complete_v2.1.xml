@@ -1,0 +1,846 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="March of the Legion" version="2.1" level="capstone">
+
+    <!-- ========================================================= -->
+    <!-- METADATOS Y OBJETIVOS                                     -->
+    <!-- ========================================================= -->
+    <metadata>
+        <course>Programación 2 - CSPR-124</course>
+        <institution>Jala University</institution>
+        <semester>2026</semester>
+        <authors>Estudiante</authors>
+    </metadata>
+
+    <objectives>
+        <general>
+            Desarrollar un simulador RTS en Java basado en CLI que demuestre dominio
+            de POO, estructuras de datos, algoritmos de ordenamiento, validación
+            robusta, medición de rendimiento y arquitectura limpia.
+        </general>
+
+        <specific>
+            <objective>Aplicar correctamente los 4 pilares de POO con implementación real y justificación técnica.</objective>
+            <objective>Implementar mínimo 4 algoritmos de ordenamiento con análisis comparativo de performance.</objective>
+            <objective>Modelar el battlefield como estructura matricial NxN con representación visual clara.</objective>
+            <objective>Procesar y validar parámetros desde CLI con manejo centralizado de excepciones.</objective>
+            <objective>Evitar colisiones en generación aleatoria de tropas y respetar capacidad del campo.</objective>
+            <objective>Ordenar tropas según orientación espacial respetando la regla: un tipo por línea.</objective>
+            <objective>Medir performance en milisegundos y presentar métricas al usuario.</objective>
+            <objective>Aplicar manejo de excepciones robusto y centralizado (evitar antipatrón try-catch disperso).</objective>
+            <objective>Implementar ciclo de interacción post-ordenamiento (move, attack, heal, status).</objective>
+            <objective>Documentar arquitectura, decisiones de diseño, patrones aplicados y UML completo.</objective>
+            <objective>Mantener historial de commits significativos en repositorio Git.</objective>
+        </specific>
+    </objectives>
+
+
+    <!-- ========================================================= -->
+    <!-- CRITERIOS DE EVALUACIÓN                                   -->
+    <!-- ========================================================= -->
+    <evaluation>
+        <criteria>
+            <criterion name="POO" weight="25%">
+                Uso correcto de herencia, polimorfismo, encapsulación y abstracción.
+                Jerarquía bien diseñada. Comportamientos diferenciados por tipo de tropa.
+            </criterion>
+            <criterion name="CleanCode" weight="15%">
+                Legibilidad, modularidad, responsabilidad única (SRP), nombres semánticos.
+            </criterion>
+            <criterion name="Algorithms" weight="20%">
+                Implementación correcta, eficiente y seleccionable de 4+ algoritmos de ordenamiento.
+                Medición de tiempos y comparación.
+            </criterion>
+            <criterion name="Validation" weight="15%">
+                Manejo de errores completo, consistente y centralizado. Sin antipatrón de excepciones dispersas.
+            </criterion>
+            <criterion name="Performance" weight="5%">
+                Medición precisa en milisegundos y presentación de métricas.
+            </criterion>
+            <criterion name="Design" weight="10%">
+                Uso correcto de patrones de diseño (Factory, Strategy, Command).
+                Justificación técnica de decisiones arquitectónicas.
+            </criterion>
+            <criterion name="Documentation" weight="10%">
+                UML completo, comentarios JavaDoc, explicación de patrones, historial Git.
+            </criterion>
+        </criteria>
+    </evaluation>
+
+
+    <!-- ========================================================= -->
+    <!-- ARQUITECTURA Y CAPAS                                      -->
+    <!-- ========================================================= -->
+    <architecture>
+        <language>Java 17</language>
+        <execution>CLI (Command Line Interface)</execution>
+        <constraints>No Maven, No Gradle, compilación manual con javac</constraints>
+        <paradigm>POO (Programación Orientada a Objetos)</paradigm>
+
+        <layers>
+            <layer name="Presentation">
+                <component>CLI Parser</component>
+                <component>Command Processor (Game Loop)</component>
+                <component>Battlefield Renderer</component>
+            </layer>
+            <layer name="Application">
+                <component>Validation Layer</component>
+                <component>Exception Handler (Centralizado)</component>
+                <component>Logger / Bitácora</component>
+            </layer>
+            <layer name="Domain">
+                <component>Troop Hierarchy (Abstract + Concrete)</component>
+                <component>Battlefield (NxN Matrix)</component>
+                <component>Position &amp; Collision Manager</component>
+            </layer>
+            <layer name="Infrastructure">
+                <component>Sorting Engine (Strategy Pattern)</component>
+                <component>Troop Factory</component>
+                <component>Random Generator</component>
+            </layer>
+        </layers>
+
+        <designDecisions>
+            <decision>
+                <question>¿Por qué herencia?</question>
+                <answer>
+                    Se usa herencia desde la clase abstracta Troop hacia las especializaciones
+                    (Infantry, Medic, Tank, etc.) para compartir atributos comunes (vida, fuerza,
+                    velocidad, rango, posición) y comportamientos base, evitando duplicación de código.
+                </answer>
+            </decision>
+            <decision>
+                <question>¿Por qué composición?</question>
+                <answer>
+                    El Battlefield se compone de una colección de Troop, pero no depende de tipos
+                    concretos. La estrategia de ordenamiento se inyecta mediante composición
+                    (Strategy Pattern), permitiendo cambiar el algoritmo en tiempo de ejecución.
+                </answer>
+            </decision>
+            <decision>
+                <question>¿Por qué agregación?</question>
+                <answer>
+                    El Battlefield agrega tropas que pueden existir independientemente del campo.
+                    Si el campo se destruye, las tropas (como entidades lógicas) pueden persistir
+                    o ser reasignadas, manteniendo bajo acoplamiento.
+                </answer>
+            </decision>
+            <decision>
+                <question>¿Por qué interfaces?</question>
+                <answer>
+                    Se definen interfaces como Movable, Attackable, Healable para desacoplar
+                    capacidades de la jerarquía de clases. Una tropa puede implementar solo las
+                    interfaces que necesita (ej: Medic implementa Healable, Tank no), dando
+                    flexibilidad sin forzar herencia múltiple.
+                </answer>
+            </decision>
+            <decision>
+                <question>¿Por qué manejo centralizado de excepciones?</question>
+                <answer>
+                    Evitar el antipatrón de dispersar try-catch por todo el código. Se centraliza
+                    en una capa de aplicación (ExceptionHandler) que captura, loguea y presenta
+                    errores de forma uniforme, facilitando mantenimiento y testing.
+                </answer>
+            </decision>
+            <decision>
+                <question>¿Por qué inyección de comportamientos?</question>
+                <answer>
+                    En lugar de forzar que todas las tropas hereden comportamientos que no usan
+                    (ej: que Tank herede heal()), se inyectan capacidades mediante interfaces.
+                    Una tropa recibe solo los comportamientos que le corresponden:
+                    - Medic implementa Healable → puede curar
+                    - Tank NO implementa Healable → no puede curar
+                    - Commander implementa Attackable y Movable → puede atacar y moverse
+                    Esto evita la "fat interface" y permite que comportamientos sean compartidos
+                    o exclusivos según el tipo de tropa, facilitando extensión sin modificar
+                    la jerarquía de clases (principio Open/Closed).
+                </answer>
+            </decision>
+        </designDecisions>
+    </architecture>
+
+
+    <!-- ========================================================= -->
+    <!-- MODELO DE DOMINIO                                         -->
+    <!-- ========================================================= -->
+    <domain>
+
+        <troopModel>
+            <baseClass name="Troop" abstract="true">
+                <attributes access="private">
+                    <attribute name="health" type="int">Vida de la unidad</attribute>
+                    <attribute name="attackPower" type="int">Fuerza de ataque</attribute>
+                    <attribute name="speed" type="int">Velocidad de movimiento</attribute>
+                    <attribute name="range" type="int">Alcance de ataque</attribute>
+                    <attribute name="position" type="Position">Coordenadas (x, y)</attribute>
+                    <attribute name="symbol" type="char">Letra representativa en el mapa</attribute>
+                </attributes>
+
+                <methods>
+                    <method name="move" return="void" access="public">Desplazamiento base</method>
+                    <method name="attack" return="void" access="public">Ataque base</method>
+                    <method name="getStatus" return="String" access="public">Resumen de atributos</method>
+                </methods>
+            </baseClass>
+
+            <interfaces>
+                <interface name="Movable">
+                    <method>moveTo(int x, int y)</method>
+                    <method>getSpeed()</method>
+                </interface>
+                <interface name="Attackable">
+                    <method>attack(Troop target)</method>
+                    <method>getAttackPower()</method>
+                </interface>
+                <interface name="Healable">
+                    <method>heal(Troop target)</method>
+                    <method>getHealPower()</method>
+                </interface>
+                <interface name="Sortable">
+                    <method>getSortKey()</method>
+                    <method>compareTo(Troop other)</method>
+                </interface>
+            </interfaces>
+
+            <types>
+                <type name="Commander" symbol="C">
+                    <behavior>Alta vida, alto ataque. Liderazgo. Implementa Attackable, Movable.</behavior>
+                </type>
+                <type name="Medic" symbol="M">
+                    <behavior>Capacidad de curar aliados. Bajo ataque. Implementa Healable, Movable.</behavior>
+                </type>
+                <type name="Tank" symbol="T">
+                    <behavior>Alta defensa, movimiento lento. Implementa Attackable, Movable.</behavior>
+                </type>
+                <type name="Sniper" symbol="S">
+                    <behavior>Alto rango, ataque preciso. Implementa Attackable, Movable.</behavior>
+                </type>
+                <type name="Infantry" symbol="I">
+                    <behavior>Unidad base equilibrada. Implementa Attackable, Movable.</behavior>
+                </type>
+                <type name="Engineer" symbol="E">
+                    <behavior>Reparación y construcción. Implementa Movable.</behavior>
+                </type>
+                <type name="Artillery" symbol="A">
+                    <behavior>Ataque a distancia masivo. Movimiento muy lento. Implementa Attackable.</behavior>
+                </type>
+                <type name="AntiAircraft" symbol="R">
+                    <behavior>Defensa aérea. Implementa Attackable, Movable.</behavior>
+                </type>
+            </types>
+
+            <polymorphism>
+                <example>
+                    Cada subclase sobreescribe move() con lógica diferente:
+                    - Tank.move(): velocidad reducida, consume más turnos.
+                    - Sniper.move(): velocidad media, pero gana bonus si no se movió antes.
+                    - Medic.move(): velocidad alta, puede moverse y curar en el mismo turno.
+                </example>
+                <behaviorInjection>
+                    <description>
+                        Los comportamientos NO se heredan obligatoriamente por toda la jerarquía.
+                        Se inyectan mediante interfaces según la especialización:
+                    </description>
+                    <case>
+                        <behavior>heal()</behavior>
+                        <injectedVia>Healable interface</injectedVia>
+                        <appliedTo>Medic únicamente</appliedTo>
+                        <rationale>
+                            Solo el médico cura. No tiene sentido que Tank o Sniper
+                            tengan este método por herencia. Se inyecta solo a quien lo necesita.
+                        </rationale>
+                    </case>
+                    <case>
+                        <behavior>attack()</behavior>
+                        <injectedVia>Attackable interface</injectedVia>
+                        <appliedTo>Commander, Tank, Sniper, Infantry, Artillery, AntiAircraft</appliedTo>
+                        <rationale>
+                            El médico NO ataca (o ataca mínimo), por lo que no implementa
+                            Attackable con valores significativos. Esto evita que Medic
+                            tenga métodos de ataque potentes por defecto.
+                        </rationale>
+                    </case>
+                    <case>
+                        <behavior>move()</behavior>
+                        <injectedVia>Movable interface</injectedVia>
+                        <appliedTo>Todas las tropas excepto Artillery (estática)</appliedTo>
+                        <rationale>
+                            Artillery es una unidad fija; no debería moverse.
+                            Al no implementar Movable, el sistema lo impide en tiempo de compilación.
+                        </rationale>
+                    </case>
+                </behaviorInjection>
+            </polymorphism>
+
+            <designPatterns>
+                <pattern name="Factory">
+                    <usage>Creación de tropas según tipo y cantidad, desacoplando la lógica de instanciación del dominio.</usage>
+                </pattern>
+                <pattern name="Strategy">
+                    <usage>Selección dinámica del algoritmo de ordenamiento en tiempo de ejecución mediante interfaz SortingStrategy.</usage>
+                </pattern>
+                <pattern name="Command">
+                    <usage>Game loop que procesa comandos del usuario (move, attack, heal, sort, exit) como objetos ejecutables.</usage>
+                </pattern>
+            </designPatterns>
+        </troopModel>
+
+
+        <battlefield>
+            <structure>Matriz cuadrada N x N (array bidimensional)</structure>
+            <constraints>
+                <minSize>5</minSize>
+                <maxSize>1000</maxSize>
+                <defaultSize>10</defaultSize>
+                <noOverlap>true</noOverlap>
+                <oneTypePerLine>true</oneTypePerLine>
+            </constraints>
+
+            <representation>
+                <empty symbol="*">Posición vacía</empty>
+                <units>
+                    C=Comandante, M=Médico, T=Tanque, S=Sniper,
+                    I=Infantería, E=Ingeniero, A=Artillero, R=Antiaérea
+                </units>
+            </representation>
+
+            <criticalRule>
+                <!-- REGLA DEL PDF: Cada tipo diferente debe estar en una línea distinta -->
+                <rule id="R1" priority="critical">
+                    En la visualización final ordenada, cada tipo de tropa debe ocupar
+                    su propia fila (o columna según orientación). NO se permiten tipos
+                    mezclados en la misma línea. Ejemplo: fila 0 = solo Comandantes,
+                    fila 1 = solo Médicos, fila 2 = solo Tanques, etc.
+                </rule>
+                <rule id="R2" priority="critical">
+                    Si el campo no tiene capacidad suficiente para acomodar cada tipo
+                    en su propia línea sin mezclar, debe lanzarse BattlefieldSizeException.
+                </rule>
+            </criticalRule>
+        </battlefield>
+
+    </domain>
+
+
+    <!-- ========================================================= -->
+    <!-- GENERACIÓN ALEATORIA                                      -->
+    <!-- ========================================================= -->
+    <generation>
+        <type>Random with collision retry</type>
+        <algorithm>
+            <step>1. Calcular total de tropas = sum(u[i])</step>
+            <step>2. Validar que total &lt;= f*f y que cada tipo quepa en su línea</step>
+            <step>3. Por cada tipo, generar posición (x, y) aleatoria</step>
+            <step>4. Si posición ocupada, reintentar hasta encontrar una libre</step>
+            <step>5. Si después de N reintentos no hay espacio, lanzar excepción</step>
+        </algorithm>
+        <rules>
+            <rule>No duplicar posiciones (colisión estricta)</rule>
+            <rule>Reintentar en colisión (máximo 1000 intentos por tropa)</rule>
+            <rule>No exceder capacidad total NxN</rule>
+            <rule>Distribución uniforme usando java.util.Random o SecureRandom</rule>
+            <rule>Respetar líneas separadas SOLO en visualización final ordenada, no en inicial</rule>
+        </rules>
+    </generation>
+
+
+    <!-- ========================================================= -->
+    <!-- ORDENAMIENTO                                              -->
+    <!-- ========================================================= -->
+    <sorting>
+
+        <criteria>
+            <primary>vida (health)</primary>
+            <secondary>fuerza (attackPower)</secondary>
+            <tertiary>rango (range)</tertiary>
+        </criteria>
+
+        <algorithms required="4">
+            <algorithm key="b" name="Bubble Sort" class="BubbleSortStrategy"/>
+            <algorithm key="i" name="Insertion Sort" class="InsertionSortStrategy"/>
+            <algorithm key="s" name="Selection Sort" class="SelectionSortStrategy"/>
+            <algorithm key="m" name="Merge Sort" class="MergeSortStrategy"/>
+            <algorithm key="q" name="Quick Sort" class="QuickSortStrategy"/>
+            <algorithm key="h" name="Heap Sort" class="HeapSortStrategy"/>
+            <algorithm key="c" name="Counting Sort" class="CountingSortStrategy"/>
+            <algorithm key="r" name="Radix Sort" class="RadixSortStrategy"/>
+        </algorithms>
+
+        <orientation>
+            <direction key="n" name="North">
+                <description>Ordenar de Sur a Norte (de abajo hacia arriba)</description>
+                <layout>Tipos ordenados de abajo (fila N-1) hacia arriba (fila 0)</layout>
+            </direction>
+            <direction key="s" name="South">
+                <description>Ordenar de Norte a Sur (de arriba hacia abajo)</description>
+                <layout>Tipos ordenados de arriba (fila 0) hacia abajo (fila N-1)</layout>
+            </direction>
+            <direction key="e" name="East">
+                <description>Ordenar de Oeste a Este (de izquierda a derecha)</description>
+                <layout>Tipos ordenados de izquierda (col 0) hacia derecha (col N-1)</layout>
+            </direction>
+            <direction key="w" name="West">
+                <description>Ordenar de Este a Oeste (de derecha a izquierda)</description>
+                <layout>Tipos ordenados de derecha (col N-1) hacia izquierda (col 0)</layout>
+            </direction>
+        </orientation>
+
+        <performance>
+            <metric>Execution Time</metric>
+            <unit>milliseconds (ms)</unit>
+            <precision>3 decimales</precision>
+            <outputFormat>Sorting time: {time} ms</outputFormat>
+            <comparison>true</comparison>
+        </performance>
+
+    </sorting>
+
+
+    <!-- ========================================================= -->
+    <!-- CLI - PARÁMETROS Y MAPEO                                  -->
+    <!-- ========================================================= -->
+    <cli>
+
+        <parameters>
+            <param name="a" required="true">
+                <desc>Algoritmo de ordenamiento a utilizar</desc>
+                <type>string (1 carácter)</type>
+                <values>
+                    <value key="b">Bubble Sort</value>
+                    <value key="i">Insertion Sort</value>
+                    <value key="s">Selection Sort</value>
+                    <value key="m">Merge Sort</value>
+                    <value key="q">Quick Sort</value>
+                    <value key="h">Heap Sort</value>
+                    <value key="c">Counting Sort</value>
+                    <value key="r">Radix Sort</value>
+                </values>
+            </param>
+
+            <param name="t" required="true">
+                <desc>Tipo de lista de entrada (determina cómo se interpretan las tropas)</desc>
+                <type>string (1 carácter)</type>
+                <values>
+                    <value key="n">Lista numérica (números enteros)</value>
+                    <value key="c">Lista de caracteres (letras)</value>
+                </values>
+
+                <mapping type="numeric">
+                    <range min="0" max="10" troop="Commander" symbol="C"/>
+                    <range min="11" max="20" troop="Medic" symbol="M"/>
+                    <range min="21" max="30" troop="Tank" symbol="T"/>
+                    <range min="31" max="40" troop="Sniper" symbol="S"/>
+                    <range min="41" max="50" troop="Infantry" symbol="I"/>
+                    <range min="51" max="60" troop="Engineer" symbol="E"/>
+                    <range min="61" max="70" troop="Artillery" symbol="A"/>
+                    <range min="71" max="80" troop="AntiAircraft" symbol="R"/>
+                </mapping>
+
+                <mapping type="character">
+                    <range from="a" to="j" troop="Commander" symbol="C"/>
+                    <range from="k" to="t" troop="Medic" symbol="M"/>
+                    <range from="u" to="z" troop="Tank" symbol="T"/>
+                    <range from="A" to="J" troop="Sniper" symbol="S"/>
+                    <range from="K" to="T" troop="Infantry" symbol="I"/>
+                    <range from="U" to="Z" troop="Engineer" symbol="E"/>
+                    <range from="0" to="4" troop="Artillery" symbol="A"/>
+                    <range from="5" to="9" troop="AntiAircraft" symbol="R"/>
+                </mapping>
+            </param>
+
+            <param name="o" required="true">
+                <desc>Orientación del ordenamiento en el campo de batalla</desc>
+                <type>string (1 carácter)</type>
+                <values>
+                    <value key="n">North (Sur → Norte)</value>
+                    <value key="s">South (Norte → Sur)</value>
+                    <value key="e">East (Oeste → Este)</value>
+                    <value key="w">West (Este → Oeste)</value>
+                </values>
+            </param>
+
+            <param name="u" required="true">
+                <desc>Distribución de tropas por rol (array de enteros)</desc>
+                <type>array[int] separado por comas</type>
+                <format>u[0]=Comandantes, u[1]=Médicos, u[2]=Tanques, u[3]=Snipers, u[4]=Infantería</format>
+                <example>u=1,2,5,5,10 → 1 Cmd, 2 Med, 5 Tnk, 5 Snp, 10 Inf</example>
+                <note>En la Primera Entrega (milestone) también se acepta el alias 'r' por compatibilidad con el PDF de la primera etapa.</note>
+            </param>
+
+            <param name="f" required="false">
+                <desc>Tamaño del campo de batalla (matriz NxN)</desc>
+                <type>int</type>
+                <range min="5" max="1000">5 a 1000 inclusive</range>
+                <default>10</default>
+            </param>
+        </parameters>
+
+        <executionExample>
+            <command>java Troops a=q t=c o=s u=1,2,5,5,10 f=10</command>
+            <meaning>
+                QuickSort, tipo carácter, orientación Sur (Norte→Sur),
+                23 tropas totales, campo 10x10
+            </meaning>
+        </executionExample>
+
+        <alternativeInput>
+            <description>
+                ADEMÁS de parámetros CLI, el programa DEBE soportar entrada interactiva
+                mediante Scanner o menú por consola. Esto es válido para la primera entrega
+                y para el modo interactivo post-ordenamiento.
+            </description>
+            <modes>
+                <mode name="CLI Arguments">
+                    <usage>java Troops a=q t=c o=s u=1,2,5,5,10 f=10</usage>
+                    <preference>Preferencia personal del profesor, pero no obligatoria</preference>
+                </mode>
+                <mode name="Scanner Interactive">
+                    <usage>Menú interactivo que solicita cada parámetro por separado</usage>
+                    <preference>Aceptado y válido para la primera entrega</preference>
+                    <behavior>
+                        Cada comando introducido por el usuario debe tener una reacción
+                        inmediata visible en pantalla. La interacción usuario-programa
+                        debe ser clara y continua.
+                    </behavior>
+                </mode>
+                <mode name="Hybrid">
+                    <usage>Detectar si hay argumentos CLI; si no, iniciar modo Scanner</usage>
+                    <note>Recomendado para máxima flexibilidad</note>
+                </mode>
+            </modes>
+            <firstStageNote>
+                Para la Primera Entrega, cualquiera de las dos formas (CLI o Scanner)
+                es aceptable siempre que exista interacción con el usuario y se validen
+                los datos ingresados.
+            </firstStageNote>
+        </alternativeInput>
+
+    </cli>
+
+
+    <!-- ========================================================= -->
+    <!-- VALIDACIONES Y EXCEPCIONES                                -->
+    <!-- ========================================================= -->
+    <validation>
+
+        <rules>
+            <rule id="V1">Algoritmo inválido (no está en la lista permitida)</rule>
+            <rule id="V2">Orientación inválida (no n, s, e, w)</rule>
+            <rule id="V3">Campo fuera de rango (&lt;5 o &gt;1000)</rule>
+            <rule id="V4">Exceso de tropas (total &gt; f*f)</rule>
+            <rule id="V5">Exceso de tropas por tipo (no cabe en su línea exclusiva)</rule>
+            <rule id="V6">Formato incorrecto de parámetro u (no es array válido)</rule>
+            <rule id="V7">Parámetros faltantes obligatorios (a, t, o, u)</rule>
+            <rule id="V8">Tipo de dato inválido en parámetro (t no es n ni c)</rule>
+            <rule id="V9">Valores numéricos negativos o cero en array de tropas</rule>
+            <rule id="V10">Colisión imposible (no hay espacio libre tras 1000 intentos)</rule>
+        </rules>
+
+        <exceptionArchitecture>
+            <strategy>Centralized Handler</strategy>
+            <description>
+                Todas las excepciones del dominio y aplicación se propagan hasta un
+                ExceptionHandler centralizado. NO se permiten bloques try-catch dispersos
+                por todo el código. El handler central:
+                1. Recibe la excepción
+                2. Loguea en consola y en archivo error.log
+                3. Muestra mensaje amigable al usuario
+                4. Sugiere comando similar si detecta typo (aproximación)
+            </description>
+            <antiPattern>
+                PROHIBIDO: try-catch anidados o repetidos en cada método.
+                CORRECTO: Un solo punto de captura en la capa de aplicación.
+            </antiPattern>
+        </exceptionArchitecture>
+
+        <exceptions>
+            <exception name="InvalidAlgorithmException" code="E001">
+                Algoritmo no reconocido. Sugerir el más cercano.
+            </exception>
+            <exception name="InvalidOrientationException" code="E002">
+                Orientación inválida. Mostrar opciones válidas.
+            </exception>
+            <exception name="BattlefieldSizeException" code="E003">
+                Campo demasiado pequeño para acomodar tropas respetando líneas separadas.
+            </exception>
+            <exception name="TroopOverflowException" code="E004">
+                Cantidad total de tropas excede capacidad NxN.
+            </exception>
+            <exception name="InvalidTroopFormatException" code="E005">
+                Formato de parámetro u incorrecto o valores negativos.
+            </exception>
+            <exception name="MissingParameterException" code="E006">
+                Falta parámetro obligatorio.
+            </exception>
+            <exception name="InvalidDataTypeException" code="E007">
+                Tipo de lista t no válido.
+            </exception>
+            <exception name="CollisionTimeoutException" code="E008">
+                Imposible generar posición única tras máximo de intentos.
+            </exception>
+            <exception name="InvalidCommandException" code="E009">
+                Comando de game loop no reconocido.
+            </exception>
+        </exceptions>
+
+    </validation>
+
+
+    <!-- ========================================================= -->
+    <!-- WORKFLOW COMPLETO                                         -->
+    <!-- ========================================================= -->
+    <workflow>
+        <phase name="Initialization">
+            <step order="1">Parse CLI arguments</step>
+            <step order="2">Validate presence and format of all parameters</step>
+            <step order="3">Create Battlefield instance (NxN)</step>
+            <step order="4">Generate Troops via Factory using parameter u</step>
+            <step order="5">Assign random positions with collision detection</step>
+            <step order="6">Render Initial Battlefield State</step>
+            <step order="7">Print summary (Algorithm, Type, Orientation, Troops, Size)</step>
+        </phase>
+
+        <phase name="Sorting">
+            <step order="8">Select Sorting Strategy based on parameter 'a'</step>
+            <step order="9">Start performance timer (System.nanoTime)</step>
+            <step order="10">Execute sorting algorithm on troop collection</step>
+            <step order="11">Stop timer and calculate milliseconds</step>
+            <step order="12">Reorganize battlefield matrix according to orientation 'o'</step>
+            <step order="13">Apply critical rule: one type per line</step>
+            <step order="14">Render Final Battlefield State</step>
+            <step order="15">Display sorting time metric</step>
+        </phase>
+
+        <phase name="Interaction" required="true">
+            <description>
+                El programa NO termina después de ordenar. Debe entrar en un ciclo
+                de comandos interactivo donde el usuario pueda interactuar con las tropas.
+            </description>
+            <step order="16">Enter Game Loop (REPL style)</step>
+            <step order="17">Display available commands prompt</step>
+            <step order="18">Accept user command (Scanner or continuous input)</step>
+            <step order="19">Parse command and route to Command pattern executor</step>
+            <step order="20">Execute action (move, attack, heal, status, sort, help, exit)</step>
+            <step order="21">Render updated battlefield if position changed</step>
+            <step order="22">Loop until 'exit' command received</step>
+        </phase>
+    </workflow>
+
+
+    <!-- ========================================================= -->
+    <!-- COMANDOS DE INTERACCIÓN (GAME LOOP)                       -->
+    <!-- ========================================================= -->
+    <gameLoop>
+        <prompt>legion&gt; </prompt>
+        <commands>
+            <command name="move" syntax="move &lt;troopId&gt; &lt;x&gt; &lt;y&gt;">
+                <description>Mueve una tropa a coordenadas específicas</description>
+                <validation>Verificar límites del campo y colisiones</validation>
+            </command>
+            <command name="attack" syntax="attack &lt;attackerId&gt; &lt;targetId&gt;">
+                <description>Ordena a una tropa atacar a otra</description>
+                <validation>Verificar rango, que ambas existan y sean enemigas</validation>
+            </command>
+            <command name="heal" syntax="heal &lt;medicId&gt; &lt;targetId&gt;">
+                <description>Ordena a un médico curar a un aliado</description>
+                <validation>Verificar que el médico implemente Healable</validation>
+            </command>
+            <command name="status" syntax="status [&lt;troopId&gt;]">
+                <description>Muestra información detallada de una tropa o de todas</description>
+            </command>
+            <command name="sort" syntax="sort &lt;algorithm&gt; [&lt;orientation&gt;]">
+                <description>Re-ordena el campo con otro algoritmo u orientación</description>
+            </command>
+            <command name="help" syntax="help">
+                <description>Muestra lista de comandos disponibles</description>
+            </command>
+            <command name="exit" syntax="exit">
+                <description>Termina la aplicación guardando log final</description>
+            </command>
+        </commands>
+    </gameLoop>
+
+
+    <!-- ========================================================= -->
+    <!-- PERFORMANCE Y MÉTRICAS                                    -->
+    <!-- ========================================================= -->
+    <performance>
+        <metric name="Execution Time">
+            <unit>milliseconds</unit>
+            <measurement>System.nanoTime() diferencia / 1_000_000.0</measurement>
+            <display>Sorting time: {value} ms</display>
+        </metric>
+        <metric name="Troop Count">
+            <display>Total troops deployed: {count}</display>
+        </metric>
+        <metric name="Battlefield Utilization">
+            <display>Occupancy: {occupied}/{total} cells</display>
+        </metric>
+    </performance>
+
+
+    <!-- ========================================================= -->
+    <!-- OUTPUT Y VISUALIZACIÓN                                    -->
+    <!-- ========================================================= -->
+    <output>
+        <initial>
+            <title>Initial Position:</title>
+            <format>Matriz NxN con símbolos y leyenda</format>
+            <legend>C=Comandante, M=Médico, T=Tanque, S=Sniper, I=Infantería, *=Vacío</legend>
+        </initial>
+        <final>
+            <title>Final Position:</title>
+            <format>Matriz NxN ordenada según orientación, un tipo por línea</format>
+            <legend>Incluir leyenda completa</legend>
+        </final>
+        <metrics>
+            <line>Algorithm: [{name}]</line>
+            <line>Type: [{type}]</line>
+            <line>Orientation: [{orientation}]</line>
+            <line>Troops: [{count}]</line>
+            <line>Battlefield: [{N}x{N}]</line>
+            <line>Sorting time: {time} ms</line>
+        </metrics>
+    </output>
+
+
+    <!-- ========================================================= -->
+    <!-- CASOS DE USO                                              -->
+    <!-- ========================================================= -->
+    <useCases>
+        <case id="UC1">
+            <input>java Troops a=q t=n o=n u=1,2,3 f=10</input>
+            <expected>Campo 10x10 con QuickSort numérico, orientación Norte (Sur→Norte)</expected>
+        </case>
+        <case id="UC2">
+            <input>java Troops a=i t=c o=s u=1,1,2,3,5 f=6</input>
+            <expected>Campo 6x6 con InsertionSort de caracteres, orientación Sur</expected>
+        </case>
+        <case id="UC3">
+            <input>java Troops a=c t=c o=e u=1,2,5,5,13 f=6</input>
+            <expected>Error: "invalid battlefield size" (13 infanterías no caben en línea propia)</expected>
+        </case>
+        <case id="UC4">
+            <input>java Troops a=c t=c o=ajs u=1,2,5,5,13 f=6</input>
+            <expected>Error: "Value of Orientation is invalid"</expected>
+        </case>
+        <case id="UC5">
+            <input>java Troops a=r t=c o=w u=1,1,2,3,5 f=6</input>
+            <expected>Campo 6x6 con RadixSort, orientación Oeste (Este→Oeste)</expected>
+        </case>
+    </useCases>
+
+
+    <!-- ========================================================= -->
+    <!-- LOGGING Y BITÁCORAS                                       -->
+    <!-- ========================================================= -->
+    <logging>
+        <strategy>
+            Implementar un Logger simple que escriba en archivo error.log
+            y también imprima en consola. Registra: timestamp, nivel (INFO, WARN, ERROR),
+            mensaje y stack trace si aplica.
+        </strategy>
+        <levels>
+            <level name="INFO">Inicio de fases, comandos ejecutados, métricas</level>
+            <level name="WARN">Reintentos de colisión, parámetros por defecto aplicados</level>
+            <level name="ERROR">Excepciones capturadas, validaciones fallidas</level>
+        </levels>
+        <output>
+            <console>true</console>
+            <file>error.log</file>
+        </output>
+    </logging>
+
+
+    <!-- ========================================================= -->
+    <!-- DOCUMENTACIÓN                                             -->
+    <!-- ========================================================= -->
+    <documentation>
+        <uml>
+            <requirement>Diagrama completo de clases incluyendo relaciones de herencia, implementación de interfaces, agregación y composición.</requirement>
+            <requirement>Diagrama de casos de uso (mínimo 6 casos identificados).</requirement>
+            <requirement>Diagrama de secuencia para el flujo de ordenamiento.</requirement>
+        </uml>
+        <explanation>
+            <requirement>Justificación técnica de cada decisión de diseño (herencia, composición, agregación, interfaces).</requirement>
+            <requirement>Explicación de por qué se eligió cada patrón de diseño.</requirement>
+            <requirement>Análisis de trade-offs de los algoritmos de ordenamiento implementados.</requirement>
+        </explanation>
+        <patterns>
+            <requirement>Explicación detallada de Factory, Strategy y Command con ejemplos del código.</requirement>
+        </patterns>
+        <repository>
+            <requirement>Repositorio Git con commits significativos y mensajes descriptivos.</requirement>
+            <requirement>Mínimo 10 commits distribuidos a lo largo del desarrollo.</requirement>
+        </repository>
+    </documentation>
+
+
+    <!-- ========================================================= -->
+    <!-- PRIMERA ENTREGA (MILESTONE)                               -->
+    <!-- ========================================================= -->
+    <milestone name="Primera Entrega">
+        <deadline>Revisión de mitad de curso</deadline>
+        <requirements>
+            <requirement>Proyecto Java nombrado "legion"</requirement>
+            <requirement>CLI funcional con parseo de parámetros</requirement>
+            <requirement>Validación completa de parámetros (tipo y presencia)</requirement>
+            <requirement>Mínimo 2 algoritmos de ordenamiento implementados</requirement>
+            <requirement>Matriz fija 6x6 para demostración</requirement>
+            <requirement>Uso de POO: clases abstractas, herencia, polimorfismo, encapsulación</requirement>
+            <requirement>Interfaces definidas e implementadas</requirement>
+            <requirement>Patrones de diseño aplicados (Factory, Strategy, Command)</requirement>
+            <requirement>Inyección de comportamientos mediante interfaces (ej: Healable solo en Medic)</requirement>
+            <requirement>Entrada de datos por CLI argumentos O Scanner interactivo (ambos válidos)</requirement>
+            <requirement>Manejo centralizado de excepciones (evitar try-catch disperso)</requirement>
+            <requirement>Documentación explicativa del diseño y decisiones técnicas</requirement>
+            <requirement>Casos de uso identificados y diagrama de clases inicial</requirement>
+            <requirement>Core implementado: consola, abstracciones, excepciones, comunicación usuario-programa</requirement>
+            <requirement>Al menos 3 tropas implementadas (ej: Infantry, Medic, Tank)</requirement>
+            <requirement>Idea definida de impresión del campo de batalla</requirement>
+            <requirement>Ciclo principal o mecanismo para recibir comandos definido</requirement>
+        </requirements>
+        <note>
+            No se espera software funcional al 100%. Se evalúa el boceto inicial,
+            la arquitectura propuesta y la justificación técnica. El diseño puede
+            evolucionar en etapas posteriores.
+        </note>
+    </milestone>
+
+
+    <!-- ========================================================= -->
+    <!-- CHECKLIST DE CUMPLIMIENTO                                 -->
+    <!-- ========================================================= -->
+    <checklist>
+        <item category="Functional" priority="High" status="required">CLI o entrada de usuario</item>
+        <item category="Functional" priority="High" status="required">Campo NxN configurable</item>
+        <item category="Functional" priority="High" status="required">Tropas mínimas: Cmd, Med, Tnk, Snp, Inf</item>
+        <item category="Functional" priority="High" status="required">Distribución vía parámetro u</item>
+        <item category="Functional" priority="High" status="required">Posiciones aleatorias sin colisiones</item>
+        <item category="Functional" priority="High" status="required">Visualización inicial y final</item>
+        <item category="Functional" priority="High" status="required">Regla: un tipo por línea en resultado ordenado</item>
+        <item category="OOP" priority="Critical" status="required">Herencia (Troop → especializaciones)</item>
+        <item category="OOP" priority="Critical" status="required">Polimorfismo (move/attack/heal diferenciados)</item>
+        <item category="OOP" priority="Critical" status="required">Encapsulación (atributos privados, getters/setters)</item>
+        <item category="OOP" priority="High" status="required">Abstracción (clases e interfaces bien definidas)</item>
+        <item category="OOP" priority="High" status="required">Interfaces (Movable, Attackable, Healable, Sortable)</item>
+        <item category="Algorithms" priority="Critical" status="required">4+ algoritmos de ordenamiento</item>
+        <item category="Algorithms" priority="High" status="required">Selección por parámetro 'a'</item>
+        <item category="Algorithms" priority="High" status="required">Medición de tiempo en milisegundos</item>
+        <item category="Orientation" priority="High" status="required">Soportar N, S, E, W</item>
+        <item category="Validation" priority="Critical" status="required">Validar campo, parámetros, orientación, tropas</item>
+        <item category="Validation" priority="Critical" status="required">Manejo centralizado de excepciones</item>
+        <item category="Interaction" priority="High" status="required">Acciones de tropas post-ordenamiento (move, attack, heal)</item>
+        <item category="Interaction" priority="High" status="required">Ciclo de comandos / Game Loop</item>
+        <item category="Architecture" priority="High" status="required">Casos de uso identificados</item>
+        <item category="Architecture" priority="High" status="required">Diagrama UML inicial</item>
+        <item category="Architecture" priority="High" status="required">Justificación técnica del diseño</item>
+        <item category="Architecture" priority="High" status="required">Core: consola, abstracciones, excepciones, comunicación</item>
+        <item category="Architecture" priority="Medium" status="recommended">Logs / Bitácora (error.log)</item>
+        <item category="Architecture" priority="Medium" status="recommended">Sugerencia de comando cercano en typo</item>
+        <item category="Design" priority="High" status="required">Inyección de comportamientos por interfaces (no herencia forzada)</item>
+        <item category="Input" priority="High" status="required">Soporte CLI arguments O Scanner interactivo (primera entrega)</item>
+        <item category="Documentation" priority="High" status="required">UML + comentarios + Git</item>
+    </checklist>
+
+</project>

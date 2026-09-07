@@ -3,11 +3,12 @@ package legion.sorting.strategies;
 import java.util.ArrayList;
 import java.util.List;
 import legion.sorting.SortingStrategy;
+import legion.sorting.TroopComparator;
 import legion.troops.Troop;
 
 /**
- * Insertion sort implementation over the health of the units.
- * Efficient for the small lists handled in this milestone.
+ * Insertion sort over the shared range comparator.
+ * Efficient for the small lists handled by the simulator.
  */
 public class InsertionSortStrategy implements SortingStrategy {
 
@@ -25,7 +26,8 @@ public class InsertionSortStrategy implements SortingStrategy {
     private void insertAtItsPlace(List<Troop> ordered, int index) {
         Troop candidate = ordered.get(index);
         int position = index - 1;
-        while (position >= 0 && ordered.get(position).getHealth() > candidate.getHealth()) {
+        while (position >= 0
+                && TroopComparator.BY_RANGE.compare(ordered.get(position), candidate) > 0) {
             ordered.set(position + 1, ordered.get(position));
             position--;
         }

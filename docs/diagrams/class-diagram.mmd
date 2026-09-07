@@ -18,8 +18,7 @@ classDiagram
     class ConsoleWriter {
         +writeLine(String text) void
         +writeTitle(String title) void
-        +writeLightSeparator() void
-        +writeHeavySeparator() void
+        +writeLabeled(String label, String value) void
         +writeFailure(String code, String message) void
     }
 
@@ -76,28 +75,43 @@ classDiagram
         -String identifier
         -TroopType type
         -int maximumHealth
+        -int range
         -int health
-        #Troop(TroopType type, int number, int health)
+        #Troop(TroopType type, int number, int health, int range)
         +receiveDamage(int damage) void
         +receiveHealing(int amount) void
+        +getRange() int
         +getStatus() String
     }
     class Commander
     class Medic
+    class Tank
+    class Sniper
     class Infantry
+    class Engineer
+    class Artillery
+    class AntiAircraft
     class TroopType {
         <<enumeration>>
         COMMANDER
         MEDIC
-        INFANTRY
         TANK
         SNIPER
+        INFANTRY
+        ENGINEER
+        ARTILLERY
+        ANTI_AIRCRAFT
+        +getSymbol() String
+        +deploymentOrder()$ TroopType[]
     }
     class TroopFactory {
         +create(TroopType type, int number) Troop
     }
 
     class Battlefield {
+        +int MINIMUM_SIZE$
+        +int MAXIMUM_SIZE$
+        +int DEFAULT_SIZE$
         -int size
         -Troop[][] cells
         +place(Position position, Troop troop) void
@@ -126,6 +140,8 @@ classDiagram
         SOUTH
         EAST
         WEST
+        +isVertical() boolean
+        +isReversed() boolean
     }
 
     class SortingStrategy {
@@ -133,16 +149,24 @@ classDiagram
         +sort(List~Troop~ troops) List~Troop~
         +getName() String
     }
+    class TroopComparator {
+        +Comparator~Troop~ BY_RANGE$
+    }
     class BubbleSortStrategy
     class InsertionSortStrategy
-    class QuickSortStrategy
+    class SelectionSortStrategy
     class MergeSortStrategy
+    class QuickSortStrategy
+    class HeapSortStrategy
+    class CountingSortStrategy
+    class RadixSortStrategy
     class SortingAlgorithm {
         <<enumeration>>
         BUBBLE
         INSERTION
-        QUICK
+        SELECTION
         MERGE
+        QUICK
         HEAP
         COUNTING
         RADIX
@@ -166,16 +190,37 @@ classDiagram
 
     Troop <|-- Commander
     Troop <|-- Medic
+    Troop <|-- Tank
+    Troop <|-- Sniper
     Troop <|-- Infantry
+    Troop <|-- Engineer
+    Troop <|-- Artillery
+    Troop <|-- AntiAircraft
     Troop ..|> Movable
     Commander ..|> Attackable
+    Tank ..|> Attackable
+    Sniper ..|> Attackable
     Infantry ..|> Attackable
+    Artillery ..|> Attackable
+    AntiAircraft ..|> Attackable
     Medic ..|> Healable
+    Engineer ..|> Healable
 
     BubbleSortStrategy ..|> SortingStrategy
     InsertionSortStrategy ..|> SortingStrategy
-    QuickSortStrategy ..|> SortingStrategy
+    SelectionSortStrategy ..|> SortingStrategy
     MergeSortStrategy ..|> SortingStrategy
+    QuickSortStrategy ..|> SortingStrategy
+    HeapSortStrategy ..|> SortingStrategy
+    CountingSortStrategy ..|> SortingStrategy
+    RadixSortStrategy ..|> SortingStrategy
+    BubbleSortStrategy ..> TroopComparator
+    InsertionSortStrategy ..> TroopComparator
+    SelectionSortStrategy ..> TroopComparator
+    MergeSortStrategy ..> TroopComparator
+    QuickSortStrategy ..> TroopComparator
+    HeapSortStrategy ..> TroopComparator
+    TroopComparator ..> Troop
 
     Troops --> LegionApplication
     Troops --> ExceptionHandler
@@ -199,10 +244,13 @@ classDiagram
     Battlefield --> Position
     BattlefieldRenderer --> Battlefield
     FormationArranger --> Orientation
+    FormationArranger --> Battlefield
     GameLoop --> Battlefield
     GameLoop --> BattlefieldRenderer
     GameLoop --> ExceptionHandler
     SortingAlgorithm --> SortingStrategy
+    ParameterValidator --> Battlefield
+    ParameterParser --> Battlefield
     LaunchParameters --> SortingAlgorithm
     LaunchParameters --> SortDirection
     LaunchParameters --> Orientation

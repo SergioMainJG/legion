@@ -6,28 +6,28 @@ import legion.troops.TroopType;
 import legion.troops.abilities.Healable;
 
 /**
- * Support unit. It moves sideways and restores health to allies, and
- * it is the only combat healer of the roster.
+ * Field support unit. It repairs allied units, which is modelled as a
+ * healing behaviour with a lower yield than the medic.
  */
-public class Medic extends Troop implements Healable {
+public class Engineer extends Troop implements Healable {
 
-    private static final int MOVEMENT_RANGE = 3;
+    private static final int MOVEMENT_RANGE = 2;
     private static final int ATTACK_RANGE = 1;
-    private static final int HEALING_POWER = 30;
+    private static final int REPAIR_POWER = 20;
     private static final String MOVEMENT_PATTERN = "lateral";
 
     /**
-     * Creates a medic unit.
+     * Creates an engineer unit.
      *
      * @param number sequential number of the unit
      * @param health initial health points
      */
-    public Medic(int number, int health) {
-        super(TroopType.MEDIC, number, health, ATTACK_RANGE);
+    public Engineer(int number, int health) {
+        super(TroopType.ENGINEER, number, health, ATTACK_RANGE);
     }
 
     /**
-     * Advances horizontally towards the right side of the battlefield.
+     * Advances horizontally to reach the unit it must repair.
      *
      * @param origin cell where the unit stands
      * @param steps  amount of cells requested
@@ -50,12 +50,12 @@ public class Medic extends Troop implements Healable {
 
     @Override
     public int heal(Troop target) {
-        target.receiveHealing(HEALING_POWER);
-        return HEALING_POWER;
+        target.receiveHealing(REPAIR_POWER);
+        return REPAIR_POWER;
     }
 
     @Override
     public int getHealingPower() {
-        return HEALING_POWER;
+        return REPAIR_POWER;
     }
 }

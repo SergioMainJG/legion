@@ -16,6 +16,7 @@ public abstract class Troop implements Movable {
     private final String identifier;
     private final TroopType type;
     private final int maximumHealth;
+    private final int range;
     private int health;
 
     /**
@@ -24,12 +25,14 @@ public abstract class Troop implements Movable {
      * @param type   catalogue entry of the unit
      * @param number sequential number used to build the identifier
      * @param health initial and maximum health of the unit
+     * @param range  attack range used as the sorting criterion
      */
-    protected Troop(TroopType type, int number, int health) {
+    protected Troop(TroopType type, int number, int health, int range) {
         this.type = type;
         this.identifier = type.getSymbol() + IDENTIFIER_SEPARATOR + number;
         this.maximumHealth = health;
         this.health = health;
+        this.range = range;
     }
 
     /**
@@ -69,6 +72,15 @@ public abstract class Troop implements Movable {
     }
 
     /**
+     * Returns the attack range of the unit.
+     *
+     * @return the range used to order the legion
+     */
+    public int getRange() {
+        return range;
+    }
+
+    /**
      * Subtracts damage from the current health without going below zero.
      *
      * @param damage amount of damage received
@@ -103,17 +115,18 @@ public abstract class Troop implements Movable {
     public String getStatus() {
         return identifier + " " + type.getLabel()
                 + " health=" + health + "/" + maximumHealth
-                + " range=" + getMovementRange()
+                + " range=" + range
+                + " movement=" + getMovementRange()
                 + " pattern=" + describeMovement();
     }
 
     /**
      * Returns the short representation used inside listings.
      *
-     * @return the identifier and the health of the unit
+     * @return the identifier and the range of the unit
      */
     @Override
     public String toString() {
-        return identifier + "(" + health + ")";
+        return identifier + "(range " + range + ")";
     }
 }

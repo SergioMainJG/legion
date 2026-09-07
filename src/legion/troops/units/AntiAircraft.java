@@ -6,37 +6,36 @@ import legion.troops.TroopType;
 import legion.troops.abilities.Attackable;
 
 /**
- * Leader of the legion. It moves diagonally and carries the highest
- * sustained attack power of the roster.
+ * Air defence unit. It tracks targets sideways and keeps a wide attack
+ * range to cover the formation.
  */
-public class Commander extends Troop implements Attackable {
+public class AntiAircraft extends Troop implements Attackable {
 
-    private static final int MOVEMENT_RANGE = 3;
-    private static final int ATTACK_RANGE = 3;
-    private static final int ATTACK_POWER = 45;
-    private static final String MOVEMENT_PATTERN = "diagonal";
+    private static final int MOVEMENT_RANGE = 2;
+    private static final int ATTACK_RANGE = 5;
+    private static final int ATTACK_POWER = 38;
+    private static final String MOVEMENT_PATTERN = "lateral";
 
     /**
-     * Creates a commander.
+     * Creates an anti aircraft unit.
      *
      * @param number sequential number of the unit
      * @param health initial health points
      */
-    public Commander(int number, int health) {
-        super(TroopType.COMMANDER, number, health, ATTACK_RANGE);
+    public AntiAircraft(int number, int health) {
+        super(TroopType.ANTI_AIRCRAFT, number, health, ATTACK_RANGE);
     }
 
     /**
-     * Moves diagonally towards the lower right corner.
+     * Traverses horizontally to align with the incoming target.
      *
-     * @param origin cell where the commander stands
+     * @param origin cell where the unit stands
      * @param steps  amount of cells requested
      * @return the destination cell
      */
     @Override
     public Position moveFrom(Position origin, int steps) {
-        int advance = Math.min(steps, MOVEMENT_RANGE);
-        return origin.shift(advance, advance);
+        return origin.shift(Math.min(steps, MOVEMENT_RANGE), 0);
     }
 
     @Override

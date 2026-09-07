@@ -3,6 +3,7 @@ package legion.setup;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Scanner;
+import legion.battlefield.Battlefield;
 import legion.battlefield.Orientation;
 import legion.console.ConsoleWriter;
 import legion.errors.types.InvalidParameterException;
@@ -18,14 +19,14 @@ import legion.troops.TroopType;
 public class InteractiveParameterReader {
 
     private static final String TITLE = "Interactive setup";
-    private static final String ALGORITHM_PROMPT = "Sorting algorithm (b=bubble, i=insertion)";
+    private static final String ALGORITHM_PROMPT =
+            "Sorting algorithm (b, i, s, m, q, h, c, r)";
     private static final String DIRECTION_PROMPT = "Order (c=ascending, d=descending)";
     private static final String ORIENTATION_PROMPT = "Orientation (n, s, e, w)";
-    private static final String FIELD_PROMPT = "Field size (empty for 6)";
+    private static final String FIELD_PROMPT = "Field size (empty for " + Battlefield.DEFAULT_SIZE + ")";
     private static final String UNITS_PROMPT_PREFIX = "Amount of ";
     private static final String PROMPT_SUFFIX = ": ";
     private static final String NUMBER_PATTERN = "\\d+";
-    private static final int DEFAULT_FIELD_SIZE = 6;
 
     private final ConsoleWriter console;
     private final Scanner scanner;
@@ -60,7 +61,7 @@ public class InteractiveParameterReader {
 
     private Map<TroopType, Integer> askCounts() {
         Map<TroopType, Integer> counts = new LinkedHashMap<>();
-        for (TroopType type : TroopType.implementedValues()) {
+        for (TroopType type : TroopType.deploymentOrder()) {
             counts.put(type, askNumber(UNITS_PROMPT_PREFIX + type.getLabel()));
         }
         return counts;
@@ -69,7 +70,7 @@ public class InteractiveParameterReader {
     private int askFieldSize() {
         String answer = ask(FIELD_PROMPT);
         if (answer.isBlank()) {
-            return DEFAULT_FIELD_SIZE;
+            return Battlefield.DEFAULT_SIZE;
         }
         return toNumber(FIELD_PROMPT, answer);
     }

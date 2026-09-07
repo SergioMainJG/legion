@@ -2,6 +2,7 @@ package legion.setup;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import legion.battlefield.Battlefield;
 import legion.battlefield.Orientation;
 import legion.errors.types.InvalidParameterException;
 import legion.sorting.SortDirection;
@@ -10,8 +11,8 @@ import legion.troops.TroopType;
 
 /**
  * Translation of the command line arguments into a configuration.
- * The parser only reads the key value pairs, the semantic rules belong
- * to the validator.
+ * The parser only checks the shape of the pairs and the format of each
+ * value, the rules that relate several values belong to the validator.
  */
 public class ParameterParser {
 
@@ -23,7 +24,6 @@ public class ParameterParser {
     private static final String UNITS_KEY = "u";
     private static final String FIELD_KEY = "f";
     private static final String NUMBER_PATTERN = "\\d+";
-    private static final int DEFAULT_FIELD_SIZE = 6;
     private static final int PAIR_PARTS = 2;
 
     /**
@@ -31,7 +31,7 @@ public class ParameterParser {
      *
      * @param arguments raw command line arguments
      * @return the configuration described by the arguments
-     * @throws InvalidParameterException when a pair is malformed or missing
+     * @throws InvalidParameterException when a pair is malformed, duplicated or missing
      */
     public LaunchParameters parse(String[] arguments) {
         Map<String, String> pairs = readPairs(arguments);
@@ -50,7 +50,12 @@ public class ParameterParser {
             if (parts.length != PAIR_PARTS || parts[0].isBlank() || parts[1].isBlank()) {
                 throw new InvalidParameterException("Malformed parameter: " + argument + ". Expected key=value.");
             }
-            pairs.put(parts[0].trim().toLowerCase(), parts[1].trim());
+            String key = parts[0].trim().toLowerCase();
+            if (pairs.containsKey(key)) {
+                throw new InvalidParameterException("Duplicated parameter: " + key
+                        + ". Each parameter must appear once.");
+            }
+            pairs.put(key, parts[1].trim());
         }
         return pairs;
     }
@@ -65,14 +70,15 @@ public class ParameterParser {
 
     private Map<TroopType, Integer> parseCounts(String value) {
         String[] parts = value.split(COUNT_SEPARATOR, -1);
-        TroopType[] types = TroopType.implementedValues();
-        if (parts.length != types.length) {
-            throw new InvalidParameterException("Parameter u expects " + types.length
+        TroopType[] types = TroopType.deploymentOrder();
+        if (parts.length < 1 || parts.length > types.length) {
+            throw new InvalidParameterException("Parameter u expects between 1 and " + types.length
                     + " values separated by commas, received " + parts.length + ".");
         }
         Map<TroopType, Integer> counts = new LinkedHashMap<>();
         for (int index = 0; index < types.length; index++) {
-            counts.put(types[index], parseCount(types[index], parts[index].trim()));
+            int amount = index < parts.length ? parseCount(types[index], parts[index].trim()) : 0;
+            counts.put(types[index], amount);
         }
         return counts;
     }
@@ -87,7 +93,7 @@ public class ParameterParser {
 
     private int parseFieldSize(String value) {
         if (value == null) {
-            return DEFAULT_FIELD_SIZE;
+            return Battlefield.DEFAULT_SIZE;
         }
         if (!value.matches(NUMBER_PATTERN)) {
             throw new InvalidParameterException("Parameter f must be a whole number, received " + value + ".");

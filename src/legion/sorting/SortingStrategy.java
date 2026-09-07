@@ -11,10 +11,11 @@ import legion.troops.Troop;
 public interface SortingStrategy {
 
     /**
-     * Sorts the units by ascending health.
+     * Sorts the units by ascending attack range.
+     * The received list is never modified, the result is a new list.
      *
      * @param troops units to sort
-     * @return a new list with the units in ascending order
+     * @return a new list with the units in ascending range order
      */
     List<Troop> sort(List<Troop> troops);
 
