@@ -12,6 +12,7 @@ import legion.troops.abilities.Attackable;
 public class Infantry extends Troop implements Attackable {
 
     private static final int MOVEMENT_RANGE = 2;
+    private static final int ATTACK_RANGE = 2;
     private static final int ATTACK_POWER = 25;
     private static final String MOVEMENT_PATTERN = "straight";
 
@@ -22,7 +23,7 @@ public class Infantry extends Troop implements Attackable {
      * @param health initial health points
      */
     public Infantry(int number, int health) {
-        super(TroopType.INFANTRY, number, health);
+        super(TroopType.INFANTRY, number, health, ATTACK_RANGE);
     }
 
     /**

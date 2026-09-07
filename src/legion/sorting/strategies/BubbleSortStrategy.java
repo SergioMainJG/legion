@@ -3,12 +3,12 @@ package legion.sorting.strategies;
 import java.util.ArrayList;
 import java.util.List;
 import legion.sorting.SortingStrategy;
+import legion.sorting.TroopComparator;
 import legion.troops.Troop;
 
 /**
- * Bubble sort implementation over the health of the units.
- * Stable and simple, kept as the reference implementation of the
- * milestone.
+ * Bubble sort over the shared range comparator.
+ * Stable and simple, kept as the reference implementation.
  */
 public class BubbleSortStrategy implements SortingStrategy {
 
@@ -28,7 +28,7 @@ public class BubbleSortStrategy implements SortingStrategy {
     private boolean bubblePass(List<Troop> ordered, int pass) {
         boolean swapped = false;
         for (int index = 0; index < ordered.size() - 1 - pass; index++) {
-            if (ordered.get(index).getHealth() > ordered.get(index + 1).getHealth()) {
+            if (TroopComparator.BY_RANGE.compare(ordered.get(index), ordered.get(index + 1)) > 0) {
                 swap(ordered, index, index + 1);
                 swapped = true;
             }

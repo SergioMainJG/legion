@@ -2,25 +2,26 @@ package legion.troops;
 
 /**
  * Catalogue of the unit types recognised by the simulator.
- * Types marked as not implemented are already part of the model so
- * the architecture can host them without modifying existing code.
+ * The declaration order is the deployment order consumed by the
+ * parameter {@code u}.
  */
 public enum TroopType {
 
-    COMMANDER("C", "Commander", true),
-    MEDIC("M", "Medic", true),
-    INFANTRY("I", "Infantry", true),
-    TANK("T", "Tank", false),
-    SNIPER("S", "Sniper", false);
+    COMMANDER("C", "Commander"),
+    MEDIC("M", "Medic"),
+    TANK("T", "Tank"),
+    SNIPER("S", "Sniper"),
+    INFANTRY("I", "Infantry"),
+    ENGINEER("E", "Engineer"),
+    ARTILLERY("A", "Artillery"),
+    ANTI_AIRCRAFT("R", "AntiAircraft");
 
     private final String symbol;
     private final String label;
-    private final boolean implemented;
 
-    TroopType(String symbol, String label, boolean implemented) {
+    TroopType(String symbol, String label) {
         this.symbol = symbol;
         this.label = label;
-        this.implemented = implemented;
     }
 
     /**
@@ -42,20 +43,11 @@ public enum TroopType {
     }
 
     /**
-     * Indicates whether the type has a concrete unit in this milestone.
+     * Returns the types in the order the parameter {@code u} lists them.
      *
-     * @return true when the type can be instantiated
+     * @return every type in deployment order
      */
-    public boolean isImplemented() {
-        return implemented;
-    }
-
-    /**
-     * Returns the types that can be deployed in this milestone.
-     *
-     * @return an array with the implemented types in deployment order
-     */
-    public static TroopType[] implementedValues() {
-        return new TroopType[] { COMMANDER, MEDIC, INFANTRY };
+    public static TroopType[] deploymentOrder() {
+        return values();
     }
 }

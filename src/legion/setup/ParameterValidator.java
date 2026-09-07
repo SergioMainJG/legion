@@ -1,10 +1,9 @@
 package legion.setup;
 
 import java.util.Map;
+import legion.battlefield.Battlefield;
 import legion.errors.types.BattlefieldSizeException;
-import legion.errors.types.InvalidAlgorithmException;
 import legion.errors.types.InvalidParameterException;
-import legion.sorting.SortingAlgorithm;
 import legion.troops.TroopType;
 
 /**
@@ -14,30 +13,21 @@ import legion.troops.TroopType;
  */
 public class ParameterValidator {
 
-    private static final int MINIMUM_FIELD_SIZE = 2;
-    private static final int MAXIMUM_FIELD_SIZE = 1000;
+    private static final int MINIMUM_FIELD_SIZE = Battlefield.MINIMUM_SIZE;
+    private static final int MAXIMUM_FIELD_SIZE = Battlefield.MAXIMUM_SIZE;
     private static final int MINIMUM_TROOPS = 1;
 
     /**
      * Validates a configuration produced by the parser or the menu.
      *
      * @param parameters configuration to validate
-     * @throws InvalidAlgorithmException  when the algorithm is only a placeholder
-     * @throws BattlefieldSizeException   when the field cannot hold the units
-     * @throws InvalidParameterException  when a count is not usable
+     * @throws BattlefieldSizeException  when the field cannot hold the units
+     * @throws InvalidParameterException when a count is not usable
      */
     public void validate(LaunchParameters parameters) {
-        validateAlgorithm(parameters.getAlgorithm());
         validateFieldSize(parameters.getFieldSize());
         validateCounts(parameters.getTroopCounts());
         validateCapacity(parameters);
-    }
-
-    private void validateAlgorithm(SortingAlgorithm algorithm) {
-        if (!algorithm.isImplemented()) {
-            throw InvalidAlgorithmException.notImplemented(algorithm.getKey(),
-                    SortingAlgorithm.implementedKeys());
-        }
     }
 
     private void validateFieldSize(int fieldSize) {

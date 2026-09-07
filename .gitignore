@@ -1,5 +1,7 @@
 out/
+out-test/
 sources.txt
+test-sources.txt
 *.class
 .idea/
 .vscode/

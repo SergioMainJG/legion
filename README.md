@@ -2,14 +2,14 @@
 
 Console strategy simulator written in **Java 17**. The project is compiled with `javac` using the `build.sh` and `run.sh` scripts included in the root directory.
 
-The program receives a configuration (sorting algorithm, sort direction, formation orientation, troop amounts, and field size), deploys the legion in random collision-free positions on a square matrix, sorts the units by their health points using the chosen algorithm, reorganizes the battlefield leaving one troop type per line, and finally hands control over to an interactive session where the user commands the units by entering commands.
+The program receives a configuration (sorting algorithm, sort direction, formation orientation, troop amounts, and field size), deploys the legion in random collision-free positions on a square matrix, sorts the units by their **attack range** using the chosen algorithm, reorganizes the battlefield leaving one troop type per line, and finally hands control over to an interactive session where the user commands the units by entering commands.
 
 ---
 
 ## How to Run
 
 ```bash
-chmod +x build.sh run.sh
+chmod +x build.sh run.sh test.sh
 
 ./build.sh
 ```
@@ -17,7 +17,7 @@ chmod +x build.sh run.sh
 CLI Mode:
 
 ```bash
-./run.sh a=b t=c o=s u=1,1,2 f=6
+./run.sh a=b t=c o=s u=1,1,2 f=10
 ```
 
 Interactive Mode (without arguments, the program prompts for each value):
@@ -26,11 +26,17 @@ Interactive Mode (without arguments, the program prompts for each value):
 ./run.sh
 ```
 
+Reproducible checks:
+
+```bash
+./test.sh
+```
+
 Equivalent execution without scripts:
 
 ```bash
 javac -d out $(find src -name "*.java")
-java -cp out legion.Troops a=i t=d o=e u=2,1,3
+java -cp out legion.Troops a=m t=d o=e u=2,1,3
 ```
 
 ---
@@ -39,13 +45,29 @@ java -cp out legion.Troops a=i t=d o=e u=2,1,3
 
 | Parameter | Meaning | Values | Required |
 |---|---|---|---|
-| `a` | Sorting algorithm | `b` bubble, `i` insertion (implemented); `q`, `m`, `h`, `c`, `r` declared as stubs | Yes |
+| `a` | Sorting algorithm | `b` bubble, `i` insertion, `s` selection, `m` merge, `q` quick, `h` heap, `c` counting, `r` radix (all implemented) | Yes |
 | `t` | Sort direction | `c` ascending, `d` descending | Yes |
-| `o` | Final formation orientation | `n` north, `s` south, `e` east, `w` west | Yes |
-| `u` | Unit counts by type, in the order `commander,medic,infantry` | Comma-separated integers, for example `1,1,2` | Yes |
-| `f` | Side length of the square matrix | Integer between 2 and 1000 | No, defaults to `6` |
+| `o` | Final formation orientation | `n` north (South → North), `s` south (North → South), `e` east (West → East), `w` west (East → West) | Yes |
+| `u` | Unit counts by type, in the order `commander, medic, tank, sniper, infantry, engineer, artillery, antiAircraft` | 1 to 8 comma-separated integers, for example `1,1,2`; missing trailing types default to `0` | Yes |
+| `f` | Side length of the square matrix | Integer between 5 and 1000 | No, defaults to `10` |
 
-Sorting is always calculated based on unit health points. Orientation determines whether sorted groups are stacked in rows (`n`, `s`) or columns (`w`, `e`) and from which border the formation expands.
+Sorting is always calculated on the unit attack range through a single shared comparator (`TroopComparator.BY_RANGE`), so every algorithm produces exactly the same order for the same input. The direction `t` is a transformation applied to that result, never a second algorithm. Orientation determines whether sorted groups are stacked in rows (`n`, `s`) or columns (`e`, `w`) and from which border the formation expands.
+
+---
+
+## Troop Roster
+
+| Type | Symbol | Attack range | Abilities |
+|---|---|---|---|
+| Commander | `C` | 3 | `Attackable`, `Movable` |
+| Medic | `M` | 1 | `Healable`, `Movable` |
+| Tank | `T` | 2 | `Attackable`, `Movable` |
+| Sniper | `S` | 6 | `Attackable`, `Movable` |
+| Infantry | `I` | 2 | `Attackable`, `Movable` |
+| Engineer | `E` | 1 | `Healable`, `Movable` |
+| Artillery | `A` | 8 | `Attackable`, `Movable` (movement range 0) |
+| AntiAircraft | `R` | 5 | `Attackable`, `Movable` |
+| empty cell | `*` | — | — |
 
 ---
 
@@ -53,23 +75,27 @@ Sorting is always calculated based on unit health points. Orientation determines
 
 ### Why Inheritance?
 
-`Troop` is an abstract class that consolidates everything identical across all units: identifier, type, current health, maximum health, receiving damage and healing, and constructing status lines. `Commander`, `Medic`, and `Infantry` inherit state and behavior instead of duplicating code. Inheritance models an *is-a* relationship: a medic **is** a troop and can substitute for `Troop` anywhere in the application without breaking functionality, fulfilling the Liskov substitution principle. Furthermore, inheritance enables the battlefield matrix to be stored as `Troop[][]`, allowing the renderer, sorter, and command loop to operate against abstractions without querying concrete classes.
+`Troop` is an abstract class that consolidates everything identical across all units: identifier, type, current health, maximum health, attack range, receiving damage and healing, and constructing status lines. The eight concrete units inherit that state and behavior instead of duplicating it. Inheritance models an *is-a* relationship: a sniper **is** a troop and can substitute for `Troop` anywhere in the application without breaking functionality, fulfilling the Liskov substitution principle. Inheritance is also what lets the battlefield matrix be stored as `Troop[][]`, so the renderer, sorter, and command loop operate against the abstraction and never query a concrete class.
 
 ### Why Composition?
 
-Classes that collaborate permanently and cannot exist independently are composed. `LegionApplication` **has** a `ParameterParser`, `ParameterValidator`, `RandomDeployer`, and `FormationArranger`. These objects share their lifecycle with the application and are not referenced elsewhere. Similarly, `RandomDeployer` composes `TroopFactory` because deployment requires unit instantiation. Composition was preferred over inheritance in these cases because the relationship is *has-a*, not *is-a*: `LegionApplication` is not a parser, it uses one. This approach keeps coupling low so modifying a parser does not alter class hierarchies.
+Classes that collaborate permanently and cannot exist independently are composed. `LegionApplication` **has** a `ParameterParser`, a `ParameterValidator`, a `RandomDeployer`, and a `FormationArranger`; those objects share the application lifecycle and nobody else references them. `RandomDeployer` composes `TroopFactory` because deployment cannot happen without creating units. Composition was preferred over inheritance because the relationship is *has-a*, not *is-a*: `LegionApplication` is not a parser, it uses one. This keeps coupling low.
 
 ### Why Aggregation?
 
-`Battlefield` aggregates troops: the matrix contains and positions them, but does not own their lifecycle. Units are created by `TroopFactory`, stored in the list returned by `RandomDeployer`, processed through the sorting algorithm, and relocated on the matrix by `FormationArranger`. Clearing the battlefield grid with `clear()` leaves the troops intact in the sorted list. Therefore, the relationship is aggregation rather than composition: it represents a *uses and contains during execution* relationship rather than strict ownership.
+`Battlefield` aggregates troops: the matrix contains and positions them but does not own their lifecycle. Units are created by `TroopFactory`, live in the list returned by `RandomDeployer`, pass through the sorting algorithm, and are relocated on the matrix by `FormationArranger`. Clearing the grid with `clear()` leaves the troops intact in the sorted list, so the relationship is *uses and contains during the run*, not strict ownership.
 
 ### Why Interfaces?
 
-Not all troops share identical actions, and placing `attack()` and `heal()` methods in the abstract base class would force units to inherit irrelevant methods. Decoupling `Movable`, `Attackable`, and `Healable` applies the Interface Segregation Principle: `Medic` implements `Healable` without receiving empty `attack()` implementations or throwing runtime exceptions, while `Infantry` implements `Attackable` without carrying healing logic. Interfaces also preserve Dependency Inversion in sorting: `LegionApplication` depends on `SortingStrategy` rather than `BubbleSortStrategy`, ensuring new algorithms can be introduced without modifying the orchestrator.
+Not all troops share the same actions, and placing `attack()` and `heal()` in the base class would force units to inherit irrelevant methods. Splitting `Movable`, `Attackable`, and `Healable` applies the Interface Segregation Principle: `Medic` and `Engineer` implement `Healable` without receiving an empty `attack()`, and `Infantry` implements `Attackable` without healing logic. Interfaces also sustain Dependency Inversion in sorting: `LegionApplication` depends on `SortingStrategy`, never on `MergeSortStrategy`.
 
 ### Why Behavior Injection?
 
-Abilities are declared on a per-unit basis rather than defined in the root class hierarchy. `Troop` only implements `Movable`, which is universal across all units. Attack and heal behaviors are injected into relevant subclasses. In `GameLoop`, before executing `attack` or `heal`, the system checks contract compatibility (`actor instanceof Attackable`) rather than checking concrete classes. When future units like `Tank`, `Sniper`, or an engineering unit enter in subsequent updates, the command loop code remains unchanged as long as new units declare their implemented interfaces.
+Abilities are declared unit by unit rather than in the root of the hierarchy. `Troop` only implements `Movable`, which every unit needs (Artillery keeps the contract but returns a movement range of 0). Attack and heal are injected into the subclasses that need them. `GameLoop` checks the contract (`actor instanceof Attackable`) instead of the concrete class, so a second healer such as `Engineer` was added without touching the command loop (Open/Closed Principle).
+
+### Why Sort by Range?
+
+The final specification orders the legion by the range attribute of the troops. `TroopComparator.BY_RANGE` is the single comparison used by every comparison-based strategy, and the counting and radix strategies use the same `getRange()` key directly. Because the comparator is a total order (range, then identifier), the eight algorithms are interchangeable: they return exactly the same list for the same input.
 
 ---
 
@@ -77,25 +103,26 @@ Abilities are declared on a per-unit basis rather than defined in the root class
 
 ### Factory: `TroopFactory`
 
-**Problem Solved:** Prevents direct `new` calls for concrete units from scattering across the codebase. If deployment instantiated `new Commander(...)` directly, any constructor modification or new unit type would require editing multiple files.
+**Problem Solved:** prevents `new Commander(...)` calls from scattering across the codebase. A single `switch` builds every unit, so a constructor change or a new type touches one file.
 
 ```java
 public Troop create(TroopType type, int number) {
     return switch (type) {
         case COMMANDER -> new Commander(number, varyHealth(COMMANDER_BASE_HEALTH));
         case MEDIC -> new Medic(number, varyHealth(MEDIC_BASE_HEALTH));
+        case TANK -> new Tank(number, varyHealth(TANK_BASE_HEALTH));
+        case SNIPER -> new Sniper(number, varyHealth(SNIPER_BASE_HEALTH));
         case INFANTRY -> new Infantry(number, varyHealth(INFANTRY_BASE_HEALTH));
-        case TANK -> throw new IllegalArgumentException(TroopType.TANK.getLabel() + NOT_IMPLEMENTED);
-        case SNIPER -> throw new IllegalArgumentException(TroopType.SNIPER.getLabel() + NOT_IMPLEMENTED);
+        case ENGINEER -> new Engineer(number, varyHealth(ENGINEER_BASE_HEALTH));
+        case ARTILLERY -> new Artillery(number, varyHealth(ARTILLERY_BASE_HEALTH));
+        case ANTI_AIRCRAFT -> new AntiAircraft(number, varyHealth(ANTI_AIRCRAFT_BASE_HEALTH));
     };
 }
 ```
 
-Pending unit types are already declared in the enum and handled in the `switch` statement, documenting the roadmap while deferring implementation details.
-
 ### Strategy: `SortingStrategy`
 
-**Problem Solved:** Allows switching sorting algorithms at runtime based on parameter `a` without spreading conditional logic throughout the application.
+**Problem Solved:** switching sorting algorithms at runtime based on parameter `a` without conditional logic spread through the application.
 
 ```java
 public interface SortingStrategy {
@@ -104,16 +131,24 @@ public interface SortingStrategy {
 }
 ```
 
-The `SortingAlgorithm` enum serves as the registry mapping console keys to concrete strategies:
+The `SortingAlgorithm` enum is the registry that maps a console key to a concrete strategy:
 
 ```java
-BUBBLE("b", BubbleSortStrategy::new, true),
-INSERTION("i", InsertionSortStrategy::new, true),
-QUICK("q", QuickSortStrategy::new, false),
-MERGE("m", MergeSortStrategy::new, false);
+BUBBLE("b", BubbleSortStrategy::new),
+INSERTION("i", InsertionSortStrategy::new),
+SELECTION("s", SelectionSortStrategy::new),
+MERGE("m", MergeSortStrategy::new),
+QUICK("q", QuickSortStrategy::new),
+HEAP("h", HeapSortStrategy::new),
+COUNTING("c", CountingSortStrategy::new),
+RADIX("r", RadixSortStrategy::new);
 ```
 
-Adding an algorithm requires implementing the interface and registering an entry in the enum, leaving existing code intact (Open/Closed Principle).
+Adding an algorithm means implementing the interface and registering one enum entry; existing code is untouched (Open/Closed Principle).
+
+### Command: `GameLoop`
+
+**Problem Solved:** the interactive session routes each line (`move`, `attack`, `heal`, `status`, `help`, `exit`) to its own handler and keeps its own `try/catch` so a bad command never ends the session. It is an extension of the simulator and is decoupled from the sorting and formation core.
 
 ---
 
@@ -128,7 +163,6 @@ classDiagram
     class Troops {
         +main(String[] arguments)$ void
     }
-
     class LegionApplication {
         -ConsoleWriter console
         -ExceptionHandler handler
@@ -138,15 +172,7 @@ classDiagram
         -FormationArranger arranger
         +run(String[] arguments) void
     }
-
-    class ConsoleWriter {
-        +writeLine(String text) void
-        +writeTitle(String title) void
-        +writeLightSeparator() void
-        +writeHeavySeparator() void
-        +writeFailure(String code, String message) void
-    }
-
+    class ConsoleWriter
     class LegionException {
         <<abstract>>
         -String code
@@ -159,24 +185,16 @@ classDiagram
     class ExceptionHandler {
         +handle(Throwable failure) void
     }
-
     class LaunchParameters {
         -SortingAlgorithm algorithm
         -SortDirection direction
         -Orientation orientation
         -Map~TroopType, Integer~ troopCounts
         -int fieldSize
-        +getTotalTroops() int
     }
-    class ParameterParser {
-        +parse(String[] arguments) LaunchParameters
-    }
-    class InteractiveParameterReader {
-        +read() LaunchParameters
-    }
-    class ParameterValidator {
-        +validate(LaunchParameters parameters) void
-    }
+    class ParameterParser
+    class InteractiveParameterReader
+    class ParameterValidator
 
     class Movable {
         <<interface>>
@@ -194,34 +212,43 @@ classDiagram
         +heal(Troop target) int
         +getHealingPower() int
     }
-
     class Troop {
         <<abstract>>
         -String identifier
         -TroopType type
         -int maximumHealth
+        -int range
         -int health
-        #Troop(TroopType type, int number, int health)
-        +receiveDamage(int damage) void
-        +receiveHealing(int amount) void
+        +getRange() int
         +getStatus() String
     }
     class Commander
     class Medic
+    class Tank
+    class Sniper
     class Infantry
+    class Engineer
+    class Artillery
+    class AntiAircraft
     class TroopType {
         <<enumeration>>
         COMMANDER
         MEDIC
-        INFANTRY
         TANK
         SNIPER
+        INFANTRY
+        ENGINEER
+        ARTILLERY
+        ANTI_AIRCRAFT
     }
     class TroopFactory {
         +create(TroopType type, int number) Troop
     }
 
     class Battlefield {
+        +int MINIMUM_SIZE$
+        +int MAXIMUM_SIZE$
+        +int DEFAULT_SIZE$
         -int size
         -Troop[][] cells
         +place(Position position, Troop troop) void
@@ -233,17 +260,10 @@ classDiagram
         <<record>>
         +int x
         +int y
-        +shift(int deltaX, int deltaY) Position
     }
-    class BattlefieldRenderer {
-        +render(Battlefield battlefield, String title) void
-    }
-    class RandomDeployer {
-        +deploy(Battlefield battlefield, Map counts) List~Troop~
-    }
-    class FormationArranger {
-        +arrange(Battlefield battlefield, List~Troop~ sorted, Orientation orientation) void
-    }
+    class BattlefieldRenderer
+    class RandomDeployer
+    class FormationArranger
     class Orientation {
         <<enumeration>>
         NORTH
@@ -257,20 +277,27 @@ classDiagram
         +sort(List~Troop~ troops) List~Troop~
         +getName() String
     }
+    class TroopComparator {
+        +Comparator~Troop~ BY_RANGE$
+    }
     class BubbleSortStrategy
     class InsertionSortStrategy
-    class QuickSortStrategy
+    class SelectionSortStrategy
     class MergeSortStrategy
+    class QuickSortStrategy
+    class HeapSortStrategy
+    class CountingSortStrategy
+    class RadixSortStrategy
     class SortingAlgorithm {
         <<enumeration>>
         BUBBLE
         INSERTION
-        QUICK
+        SELECTION
         MERGE
+        QUICK
         HEAP
         COUNTING
         RADIX
-        +createStrategy() SortingStrategy
     }
     class SortDirection {
         <<enumeration>>
@@ -278,7 +305,6 @@ classDiagram
         DESCENDING
         +apply(List~Troop~ ascending) List~Troop~
     }
-
     class GameLoop {
         +run() void
     }
@@ -290,16 +316,32 @@ classDiagram
 
     Troop <|-- Commander
     Troop <|-- Medic
+    Troop <|-- Tank
+    Troop <|-- Sniper
     Troop <|-- Infantry
+    Troop <|-- Engineer
+    Troop <|-- Artillery
+    Troop <|-- AntiAircraft
     Troop ..|> Movable
     Commander ..|> Attackable
+    Tank ..|> Attackable
+    Sniper ..|> Attackable
     Infantry ..|> Attackable
+    Artillery ..|> Attackable
+    AntiAircraft ..|> Attackable
     Medic ..|> Healable
+    Engineer ..|> Healable
 
     BubbleSortStrategy ..|> SortingStrategy
     InsertionSortStrategy ..|> SortingStrategy
-    QuickSortStrategy ..|> SortingStrategy
+    SelectionSortStrategy ..|> SortingStrategy
     MergeSortStrategy ..|> SortingStrategy
+    QuickSortStrategy ..|> SortingStrategy
+    HeapSortStrategy ..|> SortingStrategy
+    CountingSortStrategy ..|> SortingStrategy
+    RadixSortStrategy ..|> SortingStrategy
+    BubbleSortStrategy ..> TroopComparator
+    MergeSortStrategy ..> TroopComparator
 
     Troops --> LegionApplication
     Troops --> ExceptionHandler
@@ -308,24 +350,17 @@ classDiagram
     LegionApplication *-- RandomDeployer
     LegionApplication *-- FormationArranger
     LegionApplication --> InteractiveParameterReader
-    LegionApplication --> LaunchParameters
     LegionApplication --> Battlefield
     LegionApplication --> BattlefieldRenderer
     LegionApplication --> GameLoop
     LegionApplication --> SortingStrategy
     ExceptionHandler --> ConsoleWriter
-    ExceptionHandler --> LegionException
     RandomDeployer *-- TroopFactory
     TroopFactory --> Troop
-    TroopFactory --> TroopType
     Troop --> TroopType
     Battlefield o-- Troop
     Battlefield --> Position
-    BattlefieldRenderer --> Battlefield
     FormationArranger --> Orientation
-    GameLoop --> Battlefield
-    GameLoop --> BattlefieldRenderer
-    GameLoop --> ExceptionHandler
     SortingAlgorithm --> SortingStrategy
     LaunchParameters --> SortingAlgorithm
     LaunchParameters --> SortDirection
@@ -345,23 +380,69 @@ flowchart LR
     subgraph legion[March of the Legion]
         configure[UC1 Configure the run]
         deploy[UC2 Deploy the legion]
-        sort[UC3 Sort the legion]
-        interact[UC4 Interact with the troops]
-        inspect[UC5 Inspect the battlefield]
-        report[UC6 Report a failure]
+        sort[UC3 Sort the legion by range]
+        form[UC4 Form the sorted legion]
+        interact[UC5 Interact with the troops]
+        inspect[UC6 Inspect the battlefield]
+        report[UC7 Report a failure]
     end
 
     commander --> configure
     commander --> deploy
     commander --> sort
+    commander --> form
     commander --> interact
 
     deploy -.->|include| inspect
     sort -.->|include| inspect
+    form -.->|include| inspect
     interact -.->|include| inspect
     configure -.->|extend| report
+    deploy -.->|extend| report
     interact -.->|extend| report
 ```
+
+---
+
+## Sorting Sequence Diagram
+
+Source file: [`docs/diagrams/sequence-sorting.mmd`](docs/diagrams/sequence-sorting.mmd)
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant LegionApplication
+    participant ParameterParser
+    participant ParameterValidator
+    participant RandomDeployer
+    participant SortingStrategy
+    participant TroopComparator
+    participant SortDirection
+    participant FormationArranger
+
+    User->>LegionApplication: run(a, t, o, u, f)
+    LegionApplication->>ParameterParser: parse(arguments)
+    ParameterParser-->>LegionApplication: LaunchParameters
+    LegionApplication->>ParameterValidator: validate(parameters)
+    LegionApplication->>RandomDeployer: deploy(battlefield, counts)
+    RandomDeployer-->>LegionApplication: List~Troop~
+    LegionApplication->>LegionApplication: start = System.nanoTime()
+    LegionApplication->>SortingStrategy: sort(troops)
+    SortingStrategy->>TroopComparator: BY_RANGE.compare(a, b)
+    SortingStrategy-->>LegionApplication: ascending list
+    LegionApplication->>LegionApplication: elapsed = System.nanoTime() - start
+    LegionApplication->>SortDirection: apply(ascending)
+    SortDirection-->>LegionApplication: ordered list
+    LegionApplication->>FormationArranger: arrange(battlefield, ordered, orientation)
+    LegionApplication->>User: final formation and sorting time
+```
+
+---
+
+## Traceability
+
+Every Capstone requirement is mapped to a class, method, or module in
+[`docs/TRACEABILITY.md`](docs/TRACEABILITY.md).
 
 ---
 
@@ -369,19 +450,19 @@ flowchart LR
 
 | # | Use Case | Input | Expected Output |
 |---|---|---|---|
-| UC1 | Configure execution via CLI | `./run.sh a=b t=c o=s u=1,1,2 f=6` | `CONFIGURATION` block showing algorithm, direction, orientation, field size, and total troops |
-| UC2 | Configure execution via menu | `./run.sh` without arguments | Interactive prompts asking for algorithm, direction, orientation, counts, and field size, producing valid configuration |
-| UC3 | Deploy the legion | Valid configuration | `INITIAL DEPLOYMENT` map displaying troops in random collision-free cells with a symbol legend |
-| UC4 | Sort the legion | `a=b t=c` | `SORTING REPORT` block showing strategy, direction, elapsed time in nanoseconds, and sorted HP list |
-| UC5 | Form sorted legion | `o=s` | `FINAL FORMATION` map placing one troop type per line, expanding from the selected border |
-| UC6 | Interact with troops | `move I-1 2`, `status`, `help`, `exit` | Unit moves according to its pattern, state redraws, and session terminates cleanly |
-| UC7 | Report configuration error | `./run.sh a=b t=c o=s u=1,1,20 f=6` | `ERROR E-FIELD` block detailing capacity limits with controlled exit |
+| UC1 | Configure execution via CLI | `./run.sh a=b t=c o=s u=1,1,2 f=10` | `CONFIGURATION` block with algorithm, direction, orientation, field size, and total troops |
+| UC2 | Configure execution via menu | `./run.sh` without arguments | Interactive prompts for every value, producing the same configuration |
+| UC3 | Deploy the legion | Valid configuration | `INITIAL DEPLOYMENT` map with troops in random collision-free cells, row/column indices, and a legend |
+| UC4 | Sort the legion | `a=m t=c` | `SORTING REPORT` with strategy, criterion, direction, sorting time in ms, and the list ordered by range |
+| UC5 | Form the sorted legion | `o=s` | `FINAL FORMATION` with one troop type per line, expanding from the selected border |
+| UC6 | Interact with troops | `move I-1 1`, `heal M-1 I-1`, `status`, `exit` | Unit acts according to its pattern, state redraws, and the session closes cleanly |
+| UC7 | Report a configuration error | `./run.sh a=b t=c o=s u=20,20 f=5` | `ERROR E-FIELD` block detailing the capacity limit with a controlled exit |
 
 ---
 
 ## Error Handling
 
-Design: `LegionException` serves as the common base exception. There is **a single `try/catch` in `Troops.main`** and another in `GameLoop` so invalid commands do not terminate active sessions. Both delegate to `ExceptionHandler`, which serves as the sole reporting channel.
+`LegionException` is the common base. There is **a single `try/catch` in `Troops.main`** and another in `GameLoop` so an invalid command does not end an active session. Both delegate to `ExceptionHandler`, the sole reporting channel.
 
 ```bash
 grep -rn "catch" src/ | wc -l   # 2
@@ -389,224 +470,102 @@ grep -rn "catch" src/ | wc -l   # 2
 
 | Code | Exception | Trigger Condition | Example Message |
 |---|---|---|---|
-| `E-ALG` | `InvalidAlgorithmException` | Non-existent algorithm key or stub algorithm selected | `Sorting algorithm q is planned for the second milestone. Available now: b, i` |
-| `E-FIELD` | `BattlefieldSizeException` | Field size out of bounds, troop count exceeding capacity, or position outside matrix | `A line holds 6 units and 20 Infantry were requested.` |
-| `E-CMD` | `InvalidCommandException` | Unknown command, missing arguments, occupied destination, or unit lacking ability | `M-1 cannot attack.` |
-| `E-PARAM` | `InvalidParameterException` | Malformed `key=value` pair, missing required parameter, or non-numeric value | `Malformed parameter: a. Expected key=value.` |
-| `E-UNEXPECTED` | Any unhandled `RuntimeException` | Unexpected domain exception | `Unexpected failure. The operation was cancelled.` |
+| `E-ALG` | `InvalidAlgorithmException` | Algorithm key not in the catalogue | `Unknown sorting algorithm: z` |
+| `E-FIELD` | `BattlefieldSizeException` | Field size out of `[5, 1000]`, troop count over capacity, group wider than a line, more groups than lines, or a cell collision | `The battlefield holds 25 cells and 40 troops were requested.` |
+| `E-CMD` | `InvalidCommandException` | Unknown command, missing arguments, occupied destination, or unit lacking the requested ability | `Destination (0, 2) is already occupied.` |
+| `E-PARAM` | `InvalidParameterException` | Malformed `key=value` pair, duplicated key, missing required parameter, unknown `t`/`o` value, or non-numeric value | `Duplicated parameter: a. Each parameter must appear once.` |
+| `E-UNEXPECTED` | Any unhandled `RuntimeException` | Failure not modelled by the domain | `Unexpected failure. The operation was cancelled.` |
 
 ---
 
-## Execution Logs (15 Executions)
+## Sample Executions
 
-The following section documents 15 actual executions of the system covering successful workflows with various configurations (algorithms, directions, orientations, dimensions, and modes) as well as error handling verification.
-
-### 1. Ascending Bubble Sort: South Orientation (6x6 Matrix)
-**Command:** `./run.sh a=b t=c o=s u=1,1,2 f=6`
-**Result:** Random deployment, Bubble Sort sorting by HP in ascending order (`M-1`, `I-2`, `I-1`, `C-1`), and row placement starting from the south border.
+### 1. Merge Sort, ascending, south orientation (8x8)
+**Command:** `./run.sh a=m t=c o=s u=1,1,2,1,2 f=8`
 
 ```text
 ==============================================================
 CONFIGURATION
 ==============================================================
-Algorithm: Bubble Sort
+Algorithm: Merge Sort
 Order: ascending
 Orientation: south
-Field: 6x6
-Troops: 4
-==============================================================
-SORTING REPORT
-==============================================================
-Strategy: Bubble Sort
-Direction: ascending
-Elapsed: 94417 ns (0.094417 ms)
-Result: [M-1(128), I-2(166), I-1(176), C-1(193)]
-==============================================================
-FINAL FORMATION
-==============================================================
-* * * * * *
-* * * * * *
-* * * * * *
-C * * * * *
-I I * * * *
-M * * * * *
-==============================================================
-```
-
----
-
-### 2. Descending Insertion Sort: North Orientation (8x8 Matrix)
-**Command:** `./run.sh a=i t=d o=n u=2,2,4 f=8`
-**Result:** Insertion Sort sorting 8 units by HP in descending order (`C-1`, `C-2`, `I-1`, `I-2`, `M-2`, `I-3`, `I-4`, `M-1`), placed starting from the north border.
-
-```text
-==============================================================
-CONFIGURATION
-==============================================================
-Algorithm: Insertion Sort
-Order: descending
-Orientation: north
 Field: 8x8
-Troops: 8
+Troops: 7
 ==============================================================
 SORTING REPORT
 ==============================================================
-Strategy: Insertion Sort
-Direction: descending
-Elapsed: 268154 ns (0.268154 ms)
-Result: [C-1(200), C-2(185), I-1(176), I-2(154), M-2(147), I-3(145), I-4(142), M-1(142)]
-==============================================================
-FINAL FORMATION
-==============================================================
-C C * * * * * *
-I I I I * * * *
-M M * * * * * *
-* * * * * * * *
-* * * * * * * *
-* * * * * * * *
-* * * * * * * *
-* * * * * * * *
-==============================================================
-```
-
----
-
-### 3. Ascending Bubble Sort: East Orientation (5x5 Matrix)
-**Command:** `./run.sh a=b t=c o=e u=1,2,3 f=5`
-**Result:** Vertical column alignment anchored against the east border of the battlefield.
-
-```text
-==============================================================
-CONFIGURATION
-==============================================================
-Algorithm: Bubble Sort
-Order: ascending
-Orientation: east
-Field: 5x5
-Troops: 6
-==============================================================
-SORTING REPORT
-==============================================================
-Strategy: Bubble Sort
+Strategy: Merge Sort
+Criterion: attack range
 Direction: ascending
-Elapsed: 77410 ns (0.07741 ms)
-Result: [M-1(123), M-2(124), I-2(150), I-3(164), I-1(179), C-1(209)]
+Sorting time: 3.002104 ms (3002104 ns)
+Result: [M-1(range 1), I-1(range 2), I-2(range 2), T-1(range 2), T-2(range 2), C-1(range 3), S-1(range 6)]
 ==============================================================
 FINAL FORMATION
 ==============================================================
-* * C I M
-* * * I M
-* * * I *
-* * * * *
-* * * * *
+        0   1   2   3   4   5   6   7
+  0 |   M   *   *   *   *   *   *   *
+  1 |   I   I   *   *   *   *   *   *
+  2 |   T   T   *   *   *   *   *   *
+  3 |   C   *   *   *   *   *   *   *
+  4 |   S   *   *   *   *   *   *   *
+  5 |   *   *   *   *   *   *   *   *
+  6 |   *   *   *   *   *   *   *   *
+  7 |   *   *   *   *   *   *   *   *
 ==============================================================
 ```
 
----
-
-### 4. Descending Insertion Sort: West Orientation (6x6 Matrix)
-**Command:** `./run.sh a=i t=d o=w u=2,1,2 f=6`
-**Result:** Vertical column alignment anchored against the west border of the battlefield.
+### 2. Quick Sort, descending, east orientation (7x7)
+**Command:** `./run.sh a=q t=d o=e u=2,1,1,1,2,1 f=7`
 
 ```text
-==============================================================
-CONFIGURATION
-==============================================================
-Algorithm: Insertion Sort
-Order: descending
-Orientation: west
-Field: 6x6
-Troops: 5
-==============================================================
-SORTING REPORT
-==============================================================
-Strategy: Insertion Sort
-Direction: descending
-Elapsed: 128697 ns (0.128697 ms)
-Result: [C-2(193), C-1(180), I-1(177), M-1(149), I-2(142)]
+Result: [S-1(range 6), C-2(range 3), C-1(range 3), T-1(range 2), I-2(range 2), I-1(range 2), M-1(range 1), E-1(range 1)]
 ==============================================================
 FINAL FORMATION
 ==============================================================
-C I M * * *
-C I * * * *
-* * * * * *
-* * * * * *
-* * * * * *
-* * * * * *
+        0   1   2   3   4   5   6
+  0 |   S   C   T   I   M   E   *
+  1 |   *   C   *   I   *   *   *
+  2 |   *   *   *   *   *   *   *
+  ...
 ==============================================================
 ```
 
----
+Each column holds a single troop type, expanding from the west border because `o=e`.
 
-### 5. Interactive REPL Session (`GameLoop` Commands)
-**Command:** `./run.sh a=b t=c o=s u=1,1,2 f=6`
-**Input Commands:** `status`, `move I-1 2`, `attack I-1 C-1`, `heal M-1 I-1`, `exit`
-**Result:** Interactive command execution with map redrawing, boundary checking, and ability invocation.
+### 3. Radix Sort, ascending, west orientation (6x6)
+**Command:** `./run.sh a=r t=c o=w u=1,1,1 f=6`
+
+```text
+Result: [M-1(range 1), T-1(range 2), C-1(range 3)]
+==============================================================
+FINAL FORMATION
+==============================================================
+        0   1   2   3   4   5
+  0 |   *   *   *   C   T   M
+  1 |   *   *   *   *   *   *
+  ...
+==============================================================
+```
+
+The formation grows from the east border (column `N-1`) towards the west.
+
+### 4. Interactive session
+**Command:** `./run.sh a=m t=c o=s u=1,1,2,1,2 f=8` then `status`, `heal M-1 I-1`, `exit`
 
 ```text
 legion> status
-==============================================================
-BATTLEFIELD
-==============================================================
-C-1 Commander health=207/207 range=3 pattern=diagonal
-I-2 Infantry health=158/158 range=2 pattern=straight
-I-1 Infantry health=165/165 range=2 pattern=straight
-M-1 Medic health=132/132 range=1 pattern=lateral
---------------------------------------------------------------
-legion> move I-1 2
-ERROR E-CMD: Destination (1, 6) is outside the battlefield.
-legion> attack I-1 C-1
-Action executed: I-1 attacks C-1
+M-1 Medic health=143/143 range=1 movement=3 pattern=lateral
+I-1 Infantry health=150/150 range=2 movement=2 pattern=straight
+...
 legion> heal M-1 I-1
 Action executed: M-1 heals I-1
 legion> exit
 Session closed.
 ```
 
----
-
-### 6. Error E-ALG: Unknown Algorithm Key
-**Command:** `./run.sh a=z t=c o=s u=1,1,2 f=6`
-**Result:** Centralized exception handling via `ExceptionHandler` with code `E-ALG`.
-
-```text
-==============================================================
-ERROR E-ALG
-Unknown sorting algorithm: z
-==============================================================
-```
-
----
-
-### 7. Error E-ALG: Stub Algorithm Planned for Milestone 2
-**Command:** `./run.sh a=q t=c o=s u=1,1,2 f=6`
-**Result:** Controlled rejection of the QuickSort stub (`a=q`).
-
-```text
-==============================================================
-ERROR E-ALG
-Sorting algorithm q is planned for the second milestone. Available now: b, i
-==============================================================
-```
-
----
-
-### 8. Error E-PARAM: Invalid Sort Direction
-**Command:** `./run.sh a=b t=x o=s u=1,1,2 f=6`
-**Result:** Rejection of invalid value for sort direction.
-
-```text
-==============================================================
-ERROR E-PARAM
-Unknown sort direction: x. Expected c or d.
-==============================================================
-```
-
----
-
-### 9. Error E-PARAM: Invalid Orientation
-**Command:** `./run.sh a=b t=c o=z u=1,1,2 f=6`
-**Result:** Rejection of invalid value for formation orientation.
+### 5. Error: unknown orientation
+**Command:** `./run.sh a=b t=c o=z u=1,1,1 f=6`
 
 ```text
 ==============================================================
@@ -615,109 +574,38 @@ Unknown orientation: z. Expected n, s, e or w.
 ==============================================================
 ```
 
----
-
-### 10. Error E-PARAM: Malformed Parameter Syntax
-**Command:** `./run.sh invalid_arg_string`
-**Result:** Detection of invalid argument missing `key=value` format.
-
-```text
-==============================================================
-ERROR E-PARAM
-Malformed parameter: invalid_arg_string. Expected key=value.
-==============================================================
-```
-
----
-
-### 11. Error E-FIELD: Field Size Below Minimum Limit (`f=1`)
-**Command:** `./run.sh a=b t=c o=s u=1,1,2 f=1`
-**Result:** Validation enforcing minimum field size (`f >= 2`).
+### 6. Error: field too small for the troops
+**Command:** `./run.sh a=b t=c o=s u=20,20 f=5`
 
 ```text
 ==============================================================
 ERROR E-FIELD
-Field size must be between 2 and 1000, received 1.
+The battlefield holds 25 cells and 40 troops were requested.
 ==============================================================
 ```
 
----
-
-### 12. Error E-FIELD: Field Size Above Maximum Limit (`f=1500`)
-**Command:** `./run.sh a=b t=c o=s u=1,1,2 f=1500`
-**Result:** Validation enforcing maximum field size (`f <= 1000`).
+### 7. Error: line capacity overflow
+**Command:** `./run.sh a=c t=c o=e u=1,2,5,5,13 f=6`
 
 ```text
 ==============================================================
 ERROR E-FIELD
-Field size must be between 2 and 1000, received 1500.
+A line holds 6 units and 13 Infantry were requested.
 ==============================================================
 ```
+
+### 8. Default field size
+**Command:** `./run.sh a=b t=c o=s u=1,1,1` produces a `10x10` battlefield because `f` is omitted.
 
 ---
 
-### 13. Error E-FIELD: Line Capacity Overflow (`u=1,1,10` on 6x6 Matrix)
-**Command:** `./run.sh a=b t=c o=s u=1,1,10 f=6`
-**Result:** Rejection when requested count for a troop category exceeds row/column cell count.
+## Reproducible Checks
 
-```text
-==============================================================
-ERROR E-FIELD
-A line holds 6 units and 10 Infantry were requested.
-==============================================================
-```
-
----
-
-### 14. Interactive Setup Mode (Interactive Parameter Reader)
-**Command:** `./run.sh` *(without CLI arguments, prompts answered via console)*
-**Result:** Step-by-step parameter input via `InteractiveParameterReader` and `Scanner`.
-
-```text
-==============================================================
-INTERACTIVE SETUP
-==============================================================
-Sorting algorithm (b=bubble, i=insertion): b
-Order (c=ascending, d=descending): c
-Orientation (n, s, e, w): n
-Amount of Commander: 1
-Amount of Medic: 1
-Amount of Infantry: 2
-Field size (empty for 6): 6
-==============================================================
-CONFIGURATION
-==============================================================
-Algorithm: Bubble Sort
-Order: ascending
-Orientation: north
-Field: 6x6
-Troops: 4
-==============================================================
-```
-
----
-
-### 15. Minimal Matrix Execution (3x3 Grid with 1 Unit per Type)
-**Command:** `./run.sh a=i t=c o=s u=1,1,1 f=3`
-**Result:** Execution verification on minimum allowed grid size `3x3`.
-
-```text
-==============================================================
-CONFIGURATION
-==============================================================
-Algorithm: Insertion Sort
-Order: ascending
-Orientation: south
-Field: 3x3
-Troops: 3
-==============================================================
-FINAL FORMATION
-==============================================================
-C * *
-I * *
-M * *
-==============================================================
-```
+`./test.sh` compiles `src` and `test` together and runs `legion.test.TestRunner`,
+a dependency-free harness (the Capstone forbids build tools). It covers the
+parser, the validator, the eight sorting strategies (including the guarantee
+that they all return the same order), the battlefield matrix, and the four
+formation orientations. Current status: **81 checks, 0 failures**.
 
 ---
 
@@ -727,41 +615,62 @@ M * *
 legion/
 ├── build.sh
 ├── run.sh
+├── test.sh
 ├── README.md
-├── README_EN.md
-├── docs/diagrams/
-│   ├── class-diagram.mmd
-│   └── use-case-diagram.mmd
-└── src/legion/
-    ├── Troops.java
-    ├── LegionApplication.java
-    ├── console/ConsoleWriter.java
-    ├── errors/
-    │   ├── LegionException.java
-    │   ├── ExceptionHandler.java
-    │   └── types/
-    ├── setup/
-    │   ├── LaunchParameters.java
-    │   ├── ParameterParser.java
-    │   ├── InteractiveParameterReader.java
-    │   └── ParameterValidator.java
-    ├── troops/
-    │   ├── Troop.java
-    │   ├── TroopType.java
-    │   ├── TroopFactory.java
-    │   ├── abilities/
-    │   └── units/
-    ├── battlefield/
-    │   ├── Battlefield.java
-    │   ├── Position.java
-    │   ├── Orientation.java
-    │   ├── BattlefieldRenderer.java
-    │   ├── RandomDeployer.java
-    │   └── FormationArranger.java
-    ├── sorting/
-    │   ├── SortingStrategy.java
-    │   ├── SortingAlgorithm.java
-    │   ├── SortDirection.java
-    │   └── strategies/
-    └── commands/GameLoop.java
+├── README_ES.md
+├── docs/
+│   ├── TRACEABILITY.md
+│   └── diagrams/
+│       ├── class-diagram.mmd
+│       ├── use-case-diagram.mmd
+│       └── sequence-sorting.mmd
+├── src/legion/
+│   ├── Troops.java
+│   ├── LegionApplication.java
+│   ├── console/ConsoleWriter.java
+│   ├── errors/
+│   │   ├── LegionException.java
+│   │   ├── ExceptionHandler.java
+│   │   └── types/
+│   ├── setup/
+│   │   ├── LaunchParameters.java
+│   │   ├── ParameterParser.java
+│   │   ├── InteractiveParameterReader.java
+│   │   └── ParameterValidator.java
+│   ├── troops/
+│   │   ├── Troop.java
+│   │   ├── TroopType.java
+│   │   ├── TroopFactory.java
+│   │   ├── abilities/
+│   │   └── units/
+│   │       ├── Commander.java
+│   │       ├── Medic.java
+│   │       ├── Tank.java
+│   │       ├── Sniper.java
+│   │       ├── Infantry.java
+│   │       ├── Engineer.java
+│   │       ├── Artillery.java
+│   │       └── AntiAircraft.java
+│   ├── battlefield/
+│   │   ├── Battlefield.java
+│   │   ├── Position.java
+│   │   ├── Orientation.java
+│   │   ├── BattlefieldRenderer.java
+│   │   ├── RandomDeployer.java
+│   │   └── FormationArranger.java
+│   ├── sorting/
+│   │   ├── SortingStrategy.java
+│   │   ├── SortingAlgorithm.java
+│   │   ├── SortDirection.java
+│   │   ├── TroopComparator.java
+│   │   └── strategies/
+│   └── commands/GameLoop.java
+└── test/legion/test/
+    ├── TestRunner.java
+    ├── TestReport.java
+    ├── ParserTests.java
+    ├── ValidatorTests.java
+    ├── SortingTests.java
+    ├── BattlefieldTests.java
+    └── FormationTests.java
 ```

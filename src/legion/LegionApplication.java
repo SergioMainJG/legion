@@ -1,6 +1,7 @@
 package legion;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Scanner;
 import legion.battlefield.Battlefield;
 import legion.battlefield.BattlefieldRenderer;
@@ -103,9 +104,14 @@ public class LegionApplication {
                                List<Troop> sorted, long elapsed) {
         console.writeTitle(SORTING_TITLE);
         console.writeLabeled("Strategy", strategy.getName());
+        console.writeLabeled("Criterion", "attack range");
         console.writeLabeled("Direction", parameters.getDirection().getLabel());
-        console.writeLabeled("Elapsed", elapsed + " ns (" + elapsed / NANOSECONDS_IN_MILLISECOND + " ms)");
+        console.writeLabeled("Sorting time", formatMilliseconds(elapsed) + " ms (" + elapsed + " ns)");
         console.writeLabeled("Result", sorted.toString());
         console.writeHeavySeparator();
+    }
+
+    private String formatMilliseconds(long elapsed) {
+        return String.format(Locale.ROOT, "%.6f", elapsed / NANOSECONDS_IN_MILLISECOND);
     }
 }

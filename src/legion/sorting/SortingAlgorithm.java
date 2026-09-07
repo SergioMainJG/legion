@@ -9,31 +9,30 @@ import legion.sorting.strategies.InsertionSortStrategy;
 import legion.sorting.strategies.MergeSortStrategy;
 import legion.sorting.strategies.QuickSortStrategy;
 import legion.sorting.strategies.RadixSortStrategy;
+import legion.sorting.strategies.SelectionSortStrategy;
 
 /**
  * Catalogue that binds the command line key of the parameter a with
- * the strategy that must be instantiated.
+ * the strategy that must be instantiated. Every entry is backed by a
+ * working implementation.
  */
 public enum SortingAlgorithm {
 
-    BUBBLE("b", BubbleSortStrategy::new, true),
-    INSERTION("i", InsertionSortStrategy::new, true),
-    QUICK("q", QuickSortStrategy::new, false),
-    MERGE("m", MergeSortStrategy::new, false),
-    HEAP("h", HeapSortStrategy::new, false),
-    COUNTING("c", CountingSortStrategy::new, false),
-    RADIX("r", RadixSortStrategy::new, false);
-
-    private static final String KEY_SEPARATOR = ", ";
+    BUBBLE("b", BubbleSortStrategy::new),
+    INSERTION("i", InsertionSortStrategy::new),
+    SELECTION("s", SelectionSortStrategy::new),
+    MERGE("m", MergeSortStrategy::new),
+    QUICK("q", QuickSortStrategy::new),
+    HEAP("h", HeapSortStrategy::new),
+    COUNTING("c", CountingSortStrategy::new),
+    RADIX("r", RadixSortStrategy::new);
 
     private final String key;
     private final Supplier<SortingStrategy> creator;
-    private final boolean implemented;
 
-    SortingAlgorithm(String key, Supplier<SortingStrategy> creator, boolean implemented) {
+    SortingAlgorithm(String key, Supplier<SortingStrategy> creator) {
         this.key = key;
         this.creator = creator;
-        this.implemented = implemented;
     }
 
     /**
@@ -43,15 +42,6 @@ public enum SortingAlgorithm {
      */
     public String getKey() {
         return key;
-    }
-
-    /**
-     * Indicates whether the algorithm has a working implementation.
-     *
-     * @return true when the strategy can sort
-     */
-    public boolean isImplemented() {
-        return implemented;
     }
 
     /**
@@ -77,20 +67,5 @@ public enum SortingAlgorithm {
             }
         }
         throw new InvalidAlgorithmException(key);
-    }
-
-    /**
-     * Returns the keys of the algorithms that already work.
-     *
-     * @return the available keys separated by commas
-     */
-    public static String implementedKeys() {
-        StringBuilder keys = new StringBuilder();
-        for (SortingAlgorithm algorithm : values()) {
-            if (algorithm.implemented) {
-                keys.append(algorithm.key).append(KEY_SEPARATOR);
-            }
-        }
-        return keys.substring(0, keys.length() - KEY_SEPARATOR.length());
     }
 }

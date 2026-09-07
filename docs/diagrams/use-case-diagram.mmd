@@ -4,19 +4,23 @@ flowchart LR
     subgraph legion[March of the Legion]
         configure[UC1 Configure the run]
         deploy[UC2 Deploy the legion]
-        sort[UC3 Sort the legion]
-        interact[UC4 Interact with the troops]
-        inspect[UC5 Inspect the battlefield]
-        report[UC6 Report a failure]
+        sort[UC3 Sort the legion by range]
+        form[UC4 Form the sorted legion]
+        interact[UC5 Interact with the troops]
+        inspect[UC6 Inspect the battlefield]
+        report[UC7 Report a failure]
     end
 
     commander --> configure
     commander --> deploy
     commander --> sort
+    commander --> form
     commander --> interact
 
     deploy -.->|include| inspect
     sort -.->|include| inspect
+    form -.->|include| inspect
     interact -.->|include| inspect
     configure -.->|extend| report
+    deploy -.->|extend| report
     interact -.->|extend| report
