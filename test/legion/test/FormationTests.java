@@ -51,6 +51,46 @@ public class FormationTests {
             }
             return true;
         });
+        report.check("a single troop type occupies one line and nothing else", () -> {
+            Battlefield field = new Battlefield(6);
+            List<Troop> group = new ArrayList<>();
+            group.add(factory.create(TroopType.TANK, 1));
+            group.add(factory.create(TroopType.TANK, 2));
+            group.add(factory.create(TroopType.TANK, 3));
+            arranger.arrange(field, group, Orientation.SOUTH);
+            return typeAtRow(field, 0) == TroopType.TANK
+                    && countTroops(field) == 3
+                    && typeAtRow(field, 1) == null;
+        });
+        report.check("a group that exactly fills a line is placed without overflow", () -> {
+            Battlefield field = new Battlefield(5);
+            List<Troop> group = new ArrayList<>();
+            for (int number = 1; number <= 5; number++) {
+                group.add(factory.create(TroopType.INFANTRY, number));
+            }
+            arranger.arrange(field, group, Orientation.SOUTH);
+            return countTroops(field) == 5 && typeAtRow(field, 0) == TroopType.INFANTRY;
+        });
+        report.check("every troop keeps its identity through the formation", () -> {
+            Battlefield field = new Battlefield(8);
+            List<Troop> sorted = SortingAlgorithm.MERGE.createStrategy().sort(sample());
+            arranger.arrange(field, sorted, Orientation.EAST);
+            return countTroops(field) == sorted.size()
+                    && field.locate("S-1") != null
+                    && field.locate("M-1") != null;
+        });
+    }
+
+    private int countTroops(Battlefield field) {
+        int total = 0;
+        for (int row = 0; row < field.getSize(); row++) {
+            for (int column = 0; column < field.getSize(); column++) {
+                if (field.troopAt(new Position(column, row)) != null) {
+                    total++;
+                }
+            }
+        }
+        return total;
     }
 
     private Battlefield arrange(Orientation orientation) {

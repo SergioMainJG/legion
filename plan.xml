@@ -1,1313 +1,429 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<legionFinalizationPlan>
 
-<repositoryUpdateSpecification
-    project="March of the Legion"
-    repository="SergioMainJG/legion"
-    target="final-capstone"
-    language="es">
+    <purpose>
+        Completar y corregir la implementación actual de March of the Legion
+        para alinearla con los requisitos del Capstone Final.
 
-    <!-- ============================================================ -->
-    <!-- INSTRUCCIONES PARA EL AGENTE                                -->
-    <!-- ============================================================ -->
+        Regla principal:
+        NO reescribir ni reemplazar la arquitectura existente si la funcionalidad
+        ya cumple correctamente con la especificación.
 
-    <agentInstructions>
+        Prioridad:
+        1. Corregir inconsistencias reales.
+        2. Completar requisitos faltantes.
+        3. Fortalecer pruebas.
+        4. Sincronizar documentación y UML.
+        5. Evitar sobreingeniería innecesaria.
+    </purpose>
 
-        <instruction id="A1">
-            Analiza primero el código existente y conserva la arquitectura,
-            clases, abstracciones y responsabilidades que ya sean correctas.
-            No reescribas el proyecto desde cero.
-        </instruction>
+    <baseline>
 
-        <instruction id="A2">
-            Cada corrección debe realizarse sobre la implementación existente
-            buscando el menor cambio estructural necesario para satisfacer la
-            especificación final.
-        </instruction>
+        <project>
+            <name>legion</name>
+            <language>Java</language>
+        </project>
 
-        <instruction id="A3">
-            No conviertas una decisión de diseño opcional en un requisito del
-            Capstone. Las correcciones de esta especificación deben distinguir
-            entre requisito funcional, corrección de implementación y mejora
-            arquitectónica.
-        </instruction>
+        <validatedWork>
+            El proyecto obtuvo 200/200 en la evaluación del midterm.
+            La implementación aprobada debe considerarse una base estable.
+            No introducir refactorizaciones estructurales que no sean necesarias
+            para cumplir los requisitos finales.
+        </validatedWork>
 
-        <instruction id="A4">
-            Todos los algoritmos deben tener implementación real y verificable.
-            No se permite conservar clases que funcionen únicamente como stubs,
-            placeholders o lanzamientos de UnsupportedOperationException cuando
-            el algoritmo sea requerido por la especificación final.
-        </instruction>
+        <currentCapabilities>
+            <item>Battlefield configurable</item>
+            <item>Despliegue aleatorio sin posiciones duplicadas</item>
+            <item>Orientaciones n, s, e, w</item>
+            <item>Formación por tipo de tropa en líneas</item>
+            <item>Ocho tipos de tropa</item>
+            <item>Ocho algoritmos de ordenamiento</item>
+            <item>Ordenamiento basado en range</item>
+            <item>Parsing y validación de parámetros</item>
+            <item>Manejo separado de excepciones</item>
+            <item>Documentación y UML existentes</item>
+        </currentCapabilities>
 
-        <instruction id="A5">
-            Toda modificación debe mantener compatibilidad con las abstracciones
-            existentes siempre que sea técnicamente razonable, especialmente:
-            Troop, SortingStrategy, Battlefield, FormationArranger,
-            ParameterParser, ParameterValidator y ExceptionHandler.
-        </instruction>
+    </baseline>
 
-        <instruction id="A6">
-            No introducir funcionalidad ajena al proyecto únicamente para
-            aumentar complejidad. Priorizar primero el cumplimiento exacto de
-            los requisitos funcionales de la entrega final.
-        </instruction>
-
-        <instruction id="A7">
-            Cuando una implementación existente contradiga la especificación
-            oficial, debe prevalecer la especificación oficial del Capstone.
-        </instruction>
-
-    </agentInstructions>
-
-
-    <!-- ============================================================ -->
-    <!-- SECCIONES A CORREGIR                                        -->
-    <!-- ============================================================ -->
 
     <sectionsToCorrect>
 
-        <!-- ======================================================== -->
-        <!-- 1. CONFIGURACIÓN GENERAL                                 -->
-        <!-- ======================================================== -->
+        <!-- ========================================================= -->
+        <!-- 1. PARÁMETRO t                                           -->
+        <!-- ========================================================= -->
 
-        <section id="C01" name="Configuración del proyecto">
+        <section id="parameter-t">
 
-            <target>
-                src/legion/setup/ParameterParser.java,
-                src/legion/setup/ParameterValidator.java,
-                src/legion/setup/LaunchParameters.java,
-                src/legion/battlefield/Battlefield.java
-            </target>
+            <title>Resolver y documentar la semántica de t</title>
 
             <problem>
-                La implementación actual utiliza un tamaño mínimo de 2
-                y un tamaño por defecto de 6.
-                La especificación final establece un campo NxN con:
-                mínimo 5, máximo 1000 y valor por defecto 10.
+                La especificación y la implementación actual no utilizan t
+                exactamente con la misma semántica.
+
+                La implementación actual documenta t como:
+                c = ascending
+                d = descending
+
+                Mientras que la especificación del proyecto utiliza t para
+                distinguir el tipo de tratamiento del atributo.
             </problem>
 
-            <requiredChanges>
+            <requiredAction>
+                Revisar la especificación oficial y decidir explícitamente la
+                interpretación que será utilizada en la versión final.
+            </requiredAction>
 
-                <change>
-                    Cambiar el mínimo válido de battlefield de 2 a 5.
-                </change>
+            <constraints>
+                <item>
+                    No cambiar t únicamente por preferencia de diseño.
+                </item>
+                <item>
+                    La decisión debe ser consistente entre parser, modelo,
+                    sorting, README, mensajes de consola y pruebas.
+                </item>
+                <item>
+                    No mantener documentación que contradiga el comportamiento real.
+                </item>
+            </constraints>
 
-                <change>
-                    Mantener el máximo en 1000.
-                </change>
-
-                <change>
-                    Cambiar el tamaño por defecto de 6 a 10.
-                </change>
-
-                <change>
-                    Asegurar que parser, validator y Battlefield utilicen
-                    exactamente las mismas restricciones.
-                </change>
-
-                <change>
-                    Evitar constantes duplicadas con valores divergentes.
-                </change>
-
-            </requiredChanges>
-
-            <acceptanceCriteria>
-
-                <criterion>
-                    f=4 debe rechazarse.
-                </criterion>
-
-                <criterion>
-                    f=5 debe aceptarse.
-                </criterion>
-
-                <criterion>
-                    f=1000 debe aceptarse.
-                </criterion>
-
-                <criterion>
-                    f=1001 debe rechazarse.
-                </criterion>
-
-                <criterion>
-                    La ausencia de f debe producir un campo 10x10.
-                </criterion>
-
-            </acceptanceCriteria>
+            <verification>
+                <item>ParameterParser</item>
+                <item>ParameterValidator</item>
+                <item>SortDirection</item>
+                <item>README</item>
+                <item>tests</item>
+            </verification>
 
         </section>
 
 
         <!-- ========================================================= -->
-        <!-- 2. PARÁMETROS CLI                                        -->
+        <!-- 2. CRITERIO DE ORDENAMIENTO                              -->
         <!-- ========================================================= -->
 
-        <section id="C02" name="Contrato de parámetros CLI">
+        <section id="sorting-criterion">
 
-            <target>
-                src/legion/setup/ParameterParser.java,
-                src/legion/setup/LaunchParameters.java,
-                src/legion/setup/InteractiveParameterReader.java
-            </target>
+            <title>Verificar que todos los algoritmos ordenen por range</title>
 
             <problem>
-                El contrato actual del parámetro t representa la dirección
-                ascendente/descendente mediante c/d. El material del Capstone
-                describe t originalmente como selector de tipo de lista
-                (numérica o caracteres) en las etapas previas y señala que
-                para la entrega final el criterio evoluciona hacia el atributo
-                de rango de las tropas.
-
-                Por lo tanto, la implementación actual no debe darse por
-                correcta automáticamente: debe alinearse con la interpretación
-                final que se adopte a partir de la especificación oficial.
+                El requisito final establece que el ordenamiento debe realizarse
+                utilizando el atributo de rango de las tropas.
             </problem>
 
-            <requiredChanges>
+            <requiredAction>
+                Verificar individualmente los ocho algoritmos implementados y
+                garantizar que todos utilicen exactamente el mismo criterio de
+                ordenamiento.
+            </requiredAction>
 
-                <change>
-                    Revisar el contrato completo de a, t, o, u y f antes de
-                    modificar código.
-                </change>
+            <criterion>
+                range debe ser el atributo primario de comparación.
+            </criterion>
 
-                <change>
-                    El parámetro o debe conservar exactamente los valores
-                    n, s, e y w.
-                </change>
+            <tieBreaker>
+                Si se mantiene un desempate secundario por identifier, este debe
+                ser consistente en todos los algoritmos y estar documentado.
+            </tieBreaker>
 
-                <change>
-                    El parámetro f debe ser opcional y utilizar 10 como valor
-                    por defecto.
-                </change>
+            <algorithms>
+                <algorithm>Bubble Sort</algorithm>
+                <algorithm>Insertion Sort</algorithm>
+                <algorithm>Selection Sort</algorithm>
+                <algorithm>Merge Sort</algorithm>
+                <algorithm>Quick Sort</algorithm>
+                <algorithm>Heap Sort</algorithm>
+                <algorithm>Counting Sort</algorithm>
+                <algorithm>Radix Sort</algorithm>
+            </algorithms>
 
-                <change>
-                    El parámetro u debe representar cantidades de tropas
-                    según el orden definido por la especificación final.
-                </change>
-
-                <change>
-                    El parser debe separar claramente errores de sintaxis
-                    de errores semánticos.
-                </change>
-
-                <change>
-                    Los argumentos deben ser procesados de forma case-insensitive
-                    únicamente donde la especificación lo permita.
-                </change>
-
-            </requiredChanges>
-
-            <acceptanceCriteria>
-
-                <criterion>
-                    Un parámetro con formato distinto de key=value debe
-                    rechazarse correctamente.
-                </criterion>
-
-                <criterion>
-                    Los parámetros obligatorios deben detectarse cuando falten.
-                </criterion>
-
-                <criterion>
-                    Un valor inválido debe producir un error controlado y
-                    descriptivo.
-                </criterion>
-
-                <criterion>
-                    Duplicación de una clave debe tener comportamiento
-                    determinista y explícito.
-                </criterion>
-
-            </acceptanceCriteria>
+            <verification>
+                Ningún algoritmo debe ordenar por health, identifier,
+                posición u otro atributo como criterio principal.
+            </verification>
 
         </section>
 
 
         <!-- ========================================================= -->
-        <!-- 3. TIPOS DE TROPA                                       -->
+        <!-- 3. CONSISTENCIA ENTRE ALGORITMOS                         -->
         <!-- ========================================================= -->
 
-        <section id="C03" name="Modelo de tropas">
+        <section id="algorithm-consistency">
 
-            <target>
-                src/legion/troops/TroopType.java,
-                src/legion/troops/TroopFactory.java,
-                src/legion/troops/units/*
-            </target>
+            <title>Unificar comportamiento de los algoritmos</title>
 
-            <problem>
-                El modelo actual solo permite instanciar Commander, Medic
-                e Infantry. Tank y Sniper aparecen en el enum pero están
-                marcados como no implementados. El Capstone final requiere
-                modelar un conjunto más amplio de unidades.
-            </problem>
+            <requiredAction>
+                Garantizar que todos los algoritmos produzcan el mismo orden lógico
+                para el mismo conjunto de tropas y la misma dirección.
+            </requiredAction>
 
-            <requiredChanges>
-
-                <change>
-                    Completar la representación de todas las unidades
-                    requeridas por la especificación final:
-                    Commander, Medic, Tank, Sniper, Infantry, Engineer,
-                    Artillery y AntiAircraft.
-                </change>
-
-                <change>
-                    Cada tipo de tropa debe poder representarse en el modelo
-                    de dominio de manera coherente.
-                </change>
-
-                <change>
-                    TroopType debe dejar de considerar como "no implementadas"
-                    las tropas que sean necesarias para la entrega final.
-                </change>
-
-                <change>
-                    TroopFactory debe poder crear cada tipo de tropa requerido.
-                </change>
-
-                <change>
-                    Cada tropa debe conservar una relación de herencia clara
-                    respecto de Troop.
-                </change>
-
-                <change>
-                    Mantener atributos encapsulados y comportamiento
-                    especializado por subtipo.
-                </change>
-
-            </requiredChanges>
-
-            <importantConstraint>
-                No crear métodos artificiales o comportamiento vacío solamente
-                para satisfacer una jerarquía. Cada clase debe representar
-                realmente las responsabilidades del tipo de tropa.
-            </importantConstraint>
-
-            <acceptanceCriteria>
-
-                <criterion>
-                    Troop continúa siendo una abstracción común.
-                </criterion>
-
-                <criterion>
-                    Cada tipo requerido puede ser construido mediante
-                    la infraestructura de creación.
-                </criterion>
-
-                <criterion>
-                    La aplicación puede almacenar todas las tropas mediante
-                    referencias a Troop.
-                </criterion>
-
-                <criterion>
-                    No existe duplicación innecesaria de estado común.
-                </criterion>
-
-            </acceptanceCriteria>
+            <tests>
+                <test>
+                    Comparar resultado de los ocho algoritmos sobre el mismo dataset.
+                </test>
+                <test>
+                    Dataset con ranges repetidos.
+                </test>
+                <test>
+                    Dataset con un único elemento.
+                </test>
+                <test>
+                    Dataset vacío si la API interna lo permite.
+                </test>
+                <test>
+                    Dataset con ranges mínimos y máximos.
+                </test>
+                <test>
+                    Orden ascendente.
+                </test>
+                <test>
+                    Orden descendente.
+                </test>
+            </tests>
 
         </section>
 
 
         <!-- ========================================================= -->
-        <!-- 4. ATRIBUTOS DE TROPAS / CRITERIO DE ORDENAMIENTO         -->
+        <!-- 4. FORMACIÓN                                             -->
         <!-- ========================================================= -->
 
-        <section id="C04" name="Atributos y criterio de ordenamiento">
+        <section id="formation">
 
-            <target>
-                src/legion/troops/Troop.java,
-                src/legion/sorting/*,
-                src/legion/sorting/strategies/*
-            </target>
+            <title>Validar completamente la formación por líneas</title>
 
             <problem>
-                El código actual ordena exclusivamente por health.
-                Sin embargo, la especificación del Capstone final indica
-                que el ordenamiento debe relacionarse con el atributo de
-                rango de las tropas.
+                La formación final debe colocar cada tipo de tropa en una línea
+                diferente y respetar la orientación solicitada.
             </problem>
 
-            <requiredChanges>
+            <requiredAction>
+                Auditar FormationArranger para todos los casos de orientación,
+                cantidades y tamaños de battlefield permitidos.
+            </requiredAction>
 
-                <change>
-                    Introducir o completar el atributo rango de forma explícita
-                    en el modelo de Troop.
-                </change>
+            <orientationTests>
+                <test>n</test>
+                <test>s</test>
+                <test>e</test>
+                <test>w</test>
+            </orientationTests>
 
-                <change>
-                    Definir un criterio centralizado y consistente para
-                    comparar tropas mediante su rango.
-                </change>
-
-                <change>
-                    Los algoritmos de ordenamiento deben utilizar la misma
-                    operación de comparación, evitando que cada algoritmo
-                    invente un criterio distinto.
-                </change>
-
-                <change>
-                    Separar el criterio de comparación del algoritmo específico.
-                </change>
-
-                <change>
-                    Si se mantiene soporte de orden ascendente/descendente,
-                    este debe ser una transformación del resultado o del
-                    comparador, no una reimplementación del algoritmo.
-                </change>
-
-            </requiredChanges>
-
-            <criticalRule>
-                Ningún algoritmo final debe continuar utilizando health como
-                criterio principal si la interpretación final adoptada exige
-                range.
-            </criticalRule>
-
-            <acceptanceCriteria>
-
-                <criterion>
-                    Dos algoritmos diferentes producen el mismo orden cuando
-                    reciben exactamente la misma colección y configuración.
-                </criterion>
-
-                <criterion>
-                    Cambiar el atributo utilizado para comparar no obliga a
-                    duplicar algoritmos.
-                </criterion>
-
-                <criterion>
-                    El criterio está encapsulado y es fácil de sustituir.
-                </criterion>
-
-            </acceptanceCriteria>
+            <formationRules>
+                <rule>
+                    Cada tipo de tropa activo debe ocupar una línea distinta.
+                </rule>
+                <rule>
+                    Una línea no puede mezclar tipos de tropa.
+                </rule>
+                <rule>
+                    Una cantidad superior al tamaño de la línea debe provocar
+                    rechazo de la configuración.
+                </rule>
+                <rule>
+                    El número de grupos activos no puede superar el número
+                    de líneas disponibles.
+                </rule>
+            </formationRules>
 
         </section>
 
 
         <!-- ========================================================= -->
-        <!-- 5. ALGORITMOS DE ORDENAMIENTO                            -->
+        <!-- 5. VALIDACIÓN DEL BATTLEFIELD                            -->
         <!-- ========================================================= -->
 
-        <section id="C05" name="Implementación de algoritmos">
+        <section id="battlefield-validation">
 
-            <target>
-                src/legion/sorting/SortingAlgorithm.java,
-                src/legion/sorting/strategies/*
-            </target>
+            <title>Fortalecer validación de tamaño y capacidad</title>
 
-            <problem>
-                El catálogo actual declara siete algoritmos, pero solamente
-                Bubble Sort e Insertion Sort poseen implementación funcional.
-                Quick, Merge, Heap, Counting y Radix continúan siendo stubs.
-            </problem>
+            <requiredAction>
+                Verificar que la validación corresponda exactamente con los
+                límites del Capstone final.
+            </requiredAction>
 
-            <requiredChanges>
+            <rules>
+                <rule>Minimum size = 5</rule>
+                <rule>Maximum size = 1000</rule>
+                <rule>Default size = 10</rule>
+                <rule>Total troops must not exceed N*N</rule>
+                <rule>Each troop group must fit inside one line</rule>
+                <rule>Number of active troop groups must not exceed N</rule>
+            </rules>
 
-                <change>
-                    Implementar al menos cuatro algoritmos reales y funcionales.
-                </change>
-
-                <change>
-                    Se recomienda completar los siete ya registrados para
-                    evitar un catálogo parcialmente funcional.
-                </change>
-
-                <change>
-                    El valor de a debe seleccionar únicamente algoritmos
-                    funcionales en la entrega final.
-                </change>
-
-                <change>
-                    Eliminar la posibilidad de que un algoritmo requerido
-                    termine ejecutando UnsupportedOperationException.
-                </change>
-
-                <change>
-                    Cada estrategia debe implementar SortingStrategy.
-                </change>
-
-                <change>
-                    Mantener la responsabilidad de selección del algoritmo
-                    separada de la lógica del algoritmo.
-                </change>
-
-            </requiredChanges>
-
-            <minimumRequiredAlgorithms>
-
-                <algorithm key="b">Bubble Sort</algorithm>
-                <algorithm key="i">Insertion Sort</algorithm>
-                <algorithm key="s">Selection Sort</algorithm>
-                <algorithm key="m">Merge Sort</algorithm>
-
-            </minimumRequiredAlgorithms>
-
-            <additionalSupportedAlgorithms>
-
-                <algorithm key="q">Quick Sort</algorithm>
-                <algorithm key="h">Heap Sort</algorithm>
-                <algorithm key="c">Counting Sort</algorithm>
-                <algorithm key="r">Radix Sort</algorithm>
-
-            </additionalSupportedAlgorithms>
-
-            <acceptanceCriteria>
-
-                <criterion>
-                    Existen al menos cuatro estrategias completamente
-                    implementadas.
-                </criterion>
-
-                <criterion>
-                    Todas producen una colección correctamente ordenada.
-                </criterion>
-
-                <criterion>
-                    Ninguna estrategia modifica accidentalmente la colección
-                    original si el contrato actual pretende retornar una copia.
-                </criterion>
-
-                <criterion>
-                    La selección mediante a funciona en tiempo de ejecución.
-                </criterion>
-
-            </acceptanceCriteria>
+            <edgeCases>
+                <case>N = 5</case>
+                <case>N = 1000</case>
+                <case>N below minimum</case>
+                <case>N above maximum</case>
+                <case>Exactly full battlefield</case>
+                <case>One troop over total capacity</case>
+                <case>One group larger than N</case>
+                <case>Too many active groups</case>
+            </edgeCases>
 
         </section>
 
 
         <!-- ========================================================= -->
-        <!-- 6. VALIDACIÓN DE CAPACIDAD Y FORMACIONES                -->
+        <!-- 6. DEPLOYMENT                                            -->
         <!-- ========================================================= -->
 
-        <section id="C06" name="Validación de capacidad">
+        <section id="deployment">
 
-            <target>
-                src/legion/setup/ParameterValidator.java,
-                src/legion/battlefield/RandomDeployer.java,
-                src/legion/battlefield/FormationArranger.java
-            </target>
+            <title>Verificar despliegue inicial</title>
 
-            <problem>
-                La validación actual comprueba capacidad total y capacidad
-                por línea, pero la lógica debe mantenerse correcta para todas
-                las tropas y orientaciones del escenario final.
-            </problem>
+            <requiredAction>
+                Confirmar que el despliegue inicial:
+            </requiredAction>
 
-            <requiredChanges>
+            <rules>
+                <rule>uses valid battlefield coordinates</rule>
+                <rule>does not place two troops in the same position</rule>
+                <rule>places every generated troop exactly once</rule>
+                <rule>does not lose troops during reorganization</rule>
+                <rule>preserves troop identity during sorting and formation</rule>
+            </rules>
 
-                <change>
-                    Validar que el total de tropas no supere f*f.
-                </change>
-
-                <change>
-                    Validar que cada grupo pueda ocupar una línea completa
-                    sin superar N unidades por línea.
-                </change>
-
-                <change>
-                    Validar la cantidad de líneas necesarias respecto de N.
-                </change>
-
-                <change>
-                    La validación debe considerar únicamente grupos con
-                    cantidad mayor que cero al calcular líneas requeridas.
-                </change>
-
-                <change>
-                    Los mismos criterios deben funcionar para filas y columnas.
-                </change>
-
-                <change>
-                    La validación debe ejecutarse antes de desplegar
-                    las tropas cuando sea posible.
-                </change>
-
-            </requiredChanges>
-
-            <criticalExample>
-                En un campo 6x6, un grupo de 13 unidades del mismo tipo
-                no cabe en una sola línea; esa configuración debe rechazarse
-                aunque el número total de tropas sea menor que 36.
-            </criticalExample>
+            <tests>
+                <test>small battlefield</test>
+                <test>large battlefield</test>
+                <test>high troop count</test>
+                <test>repeated runs</test>
+            </tests>
 
         </section>
 
 
         <!-- ========================================================= -->
-        <!-- 7. GENERACIÓN ALEATORIA                                 -->
+        <!-- 7. PARSING                                               -->
         <!-- ========================================================= -->
 
-        <section id="C07" name="Generación aleatoria">
+        <section id="cli-parser">
 
-            <target>
-                src/legion/battlefield/RandomDeployer.java
-            </target>
+            <title>Fortalecer parser y validación de argumentos</title>
 
-            <problem>
-                El despliegue aleatorio actual es funcional en principio,
-                pero el manejo de capacidad, límites de reintentos y
-                extensibilidad debe quedar alineado con el escenario final.
-            </problem>
+            <requiredAction>
+                Revisar que todos los parámetros inválidos sean rechazados
+                de forma determinista y con mensajes comprensibles.
+            </requiredAction>
 
-            <requiredChanges>
+            <parameters>
+                <parameter>a</parameter>
+                <parameter>t</parameter>
+                <parameter>o</parameter>
+                <parameter>u</parameter>
+                <parameter>f</parameter>
+            </parameters>
 
-                <change>
-                    Mantener generación aleatoria de posiciones iniciales.
-                </change>
-
-                <change>
-                    Garantizar que una posición nunca sea ocupada por dos tropas.
-                </change>
-
-                <change>
-                    Garantizar que toda posición generada esté dentro del campo.
-                </change>
-
-                <change>
-                    Mantener una política de reintentos que impida un
-                    bucle infinito.
-                </change>
-
-                <change>
-                    Preferir una estrategia que degrade correctamente cuando
-                    el campo se encuentra muy lleno.
-                </change>
-
-                <change>
-                    El proceso de generación no debe imponer la formación
-                    final; la restricción de "un tipo por línea" corresponde
-                    a la organización final.
-                </change>
-
-            </requiredChanges>
+            <invalidCases>
+                <case>missing parameter</case>
+                <case>duplicate parameter</case>
+                <case>unknown parameter</case>
+                <case>malformed key=value</case>
+                <case>invalid algorithm</case>
+                <case>invalid t value</case>
+                <case>invalid orientation</case>
+                <case>non-numeric troop quantity</case>
+                <case>negative troop quantity</case>
+                <case>invalid battlefield size</case>
+                <case>empty troop configuration</case>
+            </invalidCases>
 
         </section>
 
 
         <!-- ========================================================= -->
-        <!-- 8. ORIENTACIÓN Y FORMACIÓN                              -->
+        <!-- 8. EXCEPCIONES                                           -->
         <!-- ========================================================= -->
 
-        <section id="C08" name="Orientation y FormationArranger">
-
-            <target>
-                src/legion/battlefield/Orientation.java,
-                src/legion/battlefield/FormationArranger.java
-            </target>
-
-            <problem>
-                La abstracción actual ya distingue orientación horizontal/
-                vertical y reversión, pero debe verificarse que el resultado
-                coincida exactamente con la semántica del Capstone.
-            </problem>
-
-            <requiredChanges>
-
-                <change>
-                    n = ordenar de Sur a Norte.
-                </change>
-
-                <change>
-                    s = ordenar de Norte a Sur.
-                </change>
-
-                <change>
-                    e = ordenar de Oeste a Este.
-                </change>
-
-                <change>
-                    w = ordenar de Este a Oeste.
-                </change>
-
-                <change>
-                    La orientación norte/sur debe trabajar mediante filas.
-                </change>
-
-                <change>
-                    La orientación este/oeste debe trabajar mediante columnas.
-                </change>
-
-                <change>
-                    La primera línea ocupada debe depender del borde
-                    correspondiente a la orientación.
-                </change>
-
-                <change>
-                    Cada tipo de tropa debe ocupar una línea exclusiva.
-                </change>
-
-            </requiredChanges>
-
-            <acceptanceCriteria>
-
-                <criterion>
-                    Para n, la formación se construye desde la dirección
-                    Sur hacia Norte.
-                </criterion>
-
-                <criterion>
-                    Para s, la formación se construye desde Norte hacia Sur.
-                </criterion>
-
-                <criterion>
-                    Para e, la formación se construye desde Oeste hacia Este.
-                </criterion>
-
-                <criterion>
-                    Para w, la formación se construye desde Este hacia Oeste.
-                </criterion>
-
-                <criterion>
-                    Nunca aparecen dos tipos diferentes en la misma línea
-                    de la formación final.
-                </criterion>
-
-            </acceptanceCriteria>
-
-        </section>
-
-
-        <!-- ========================================================= -->
-        <!-- 9. IMPLEMENTACIÓN DEL BATTLEFIELD                        -->
-        <!-- ========================================================= -->
-
-        <section id="C09" name="Battlefield">
-
-            <target>
-                src/legion/battlefield/Battlefield.java
-            </target>
-
-            <problem>
-                La clase está bien encaminada, pero utiliza restricciones
-                incompatibles con la especificación final.
-            </problem>
-
-            <requiredChanges>
-
-                <change>
-                    Cambiar MINIMUM_SIZE de 2 a 5.
-                </change>
-
-                <change>
-                    Mantener MAXIMUM_SIZE en 1000.
-                </change>
-
-                <change>
-                    Mantener la matriz como Troop[][].
-                </change>
-
-                <change>
-                    Mantener validación centralizada de coordenadas.
-                </change>
-
-                <change>
-                    Mantener consultas de ocupación y localización de tropas.
-                </change>
-
-                <change>
-                    Garantizar que place() no permita silenciosamente
-                    sobrescribir una tropa ya desplegada cuando la operación
-                    pretenda ser una colocación exclusiva.
-                </change>
-
-            </requiredChanges>
-
-        </section>
-
-
-        <!-- ========================================================= -->
-        <!-- 10. POO E INTERFACES                                    -->
-        <!-- ========================================================= -->
-
-        <section id="C10" name="POO">
-
-            <target>
-                src/legion/troops/*,
-                src/legion/battlefield/*,
-                src/legion/sorting/*
-            </target>
-
-            <problem>
-                La estructura ya utiliza abstracción, herencia y varias
-                interfaces, pero la ampliación del modelo debe conservar
-                correctamente esos principios.
-            </problem>
-
-            <requiredChanges>
-
-                <change>
-                    Mantener Troop como abstracción de las propiedades comunes.
-                </change>
-
-                <change>
-                    Utilizar herencia para especializar tipos de tropa.
-                </change>
-
-                <change>
-                    Mantener atributos internos encapsulados.
-                </change>
-
-                <change>
-                    Usar interfaces para capacidades diferenciadas cuando
-                    corresponda.
-                </change>
-
-                <change>
-                    Evitar que la superclase acumule comportamientos que no
-                    pertenecen a todas las tropas.
-                </change>
-
-                <change>
-                    Asegurar que el polimorfismo sea observable mediante
-                    comportamientos diferentes de las subclases.
-                </change>
-
-            </requiredChanges>
-
-        </section>
-
-
-        <!-- ========================================================= -->
-        <!-- 11. MANEJO DE EXCEPCIONES                               -->
-        <!-- ========================================================= -->
-
-        <section id="C11" name="Excepciones">
-
-            <target>
-                src/legion/errors/*,
-                src/legion/Troops.java,
-                src/legion/commands/GameLoop.java
-            </target>
-
-            <problem>
-                La arquitectura actual tiene una buena base de excepciones
-                centralizadas, pero debe garantizar cobertura completa para
-                la especificación final.
-            </problem>
-
-            <requiredChanges>
-
-                <change>
-                    Mantener LegionException como abstracción común para
-                    errores propios del dominio.
-                </change>
-
-                <change>
-                    Mantener ExceptionHandler como punto central de
-                    presentación de errores.
-                </change>
-
-                <change>
-                    Cubrir como mínimo errores de algoritmo, orientación,
-                    parámetros inválidos, capacidad del campo y comandos
-                    inválidos.
-                </change>
-
-                <change>
-                    Evitar try/catch innecesarios dentro de cada método
-                    de negocio.
-                </change>
-
-                <change>
-                    Los errores deben ser comprensibles para el usuario.
-                </change>
-
-            </requiredChanges>
-
-        </section>
-
-
-        <!-- ========================================================= -->
-        <!-- 12. VISUALIZACIÓN                                       -->
-        <!-- ========================================================= -->
-
-        <section id="C12" name="Renderizado">
-
-            <target>
-                src/legion/battlefield/BattlefieldRenderer.java,
-                src/legion/console/ConsoleWriter.java,
-                src/legion/LegionApplication.java
-            </target>
-
-            <problem>
-                La infraestructura de salida ya existe, pero la salida
-                debe garantizar que la representación corresponda a los
-                requisitos del Capstone final.
-            </problem>
-
-            <requiredChanges>
-
-                <change>
-                    Mostrar configuración antes de la ejecución.
-                </change>
-
-                <change>
-                    Mostrar el battlefield inicial.
-                </change>
-
-                <change>
-                    Mostrar el battlefield final.
-                </change>
-
-                <change>
-                    Utilizar símbolos consistentes con cada tipo de unidad.
-                </change>
-
-                <change>
-                    Mostrar claramente filas y columnas para que el usuario
-                    pueda interpretar la orientación.
-                </change>
-
-                <change>
-                    Mantener una leyenda de símbolos.
-                </change>
-
-            </requiredChanges>
-
-        </section>
-
-
-        <!-- ========================================================= -->
-        <!-- 13. MÉTRICAS DE PERFORMANCE                             -->
-        <!-- ========================================================= -->
-
-        <section id="C13" name="Medición de sorting">
-
-            <target>
-                src/legion/LegionApplication.java,
-                src/legion/sorting/*
-            </target>
-
-            <problem>
-                La medición actual usa System.nanoTime(), lo cual es adecuado,
-                pero el reporte debe estar integrado al contrato final y
-                describir claramente qué se está midiendo.
-            </problem>
-
-            <requiredChanges>
-
-                <change>
-                    Medir exclusivamente el tiempo de ejecución del algoritmo
-                    de ordenamiento.
-                </change>
-
-                <change>
-                    No incluir renderizado, despliegue o interacción del usuario
-                    dentro de la medición del algoritmo.
-                </change>
-
-                <change>
-                    Mostrar el resultado en milisegundos.
-                </change>
-
-                <change>
-                    Mantener suficiente precisión para ejecuciones pequeñas.
-                </change>
-
-                <change>
-                    El informe debe identificar qué algoritmo fue medido.
-                </change>
-
-            </requiredChanges>
-
-        </section>
-
-
-        <!-- ========================================================= -->
-        <!-- 14. GAME LOOP / FUNCIONALIDAD EXTRA EXISTENTE            -->
-        <!-- ========================================================= -->
-
-        <section id="C14" name="GameLoop existente">
-
-            <target>
-                src/legion/commands/GameLoop.java,
-                src/legion/LegionApplication.java
-            </target>
-
-            <problem>
-                El repositorio actualmente termina el flujo principal
-                entrando en una sesión interactiva con comandos move,
-                attack, heal, status, help y exit.
-
-                Esta funcionalidad no es el núcleo del requisito del
-                Capstone descrito en el documento, por lo que no debe
-                interferir con la entrega final.
-            </problem>
-
-            <requiredChanges>
-
-                <change>
-                    Mantener GameLoop únicamente si no interfiere con
-                    la ejecución obligatoria del simulador.
-                </change>
-
-                <change>
-                    La ejecución principal debe completar correctamente
-                    validación, despliegue, sorting, formación, renderizado
-                    y métrica independientemente de las funcionalidades extra.
-                </change>
-
-                <change>
-                    Las acciones interactivas no deben utilizarse para
-                    compensar requisitos faltantes del simulador.
-                </change>
-
-                <change>
-                    Si se conserva esta funcionalidad, debe considerarse
-                    una extensión del sistema y permanecer desacoplada de
-                    la especificación central de sorting/formation.
-                </change>
-
-            </requiredChanges>
-
-        </section>
-
-
-        <!-- ========================================================= -->
-        <!-- 15. DOCUMENTACIÓN UML                                    -->
-        <!-- ========================================================= -->
-
-        <section id="C15" name="UML">
-
-            <target>
-                docs/diagrams/*
-            </target>
-
-            <problem>
-                Existe un class diagram, pero actualmente representa solo
-                tres tipos concretos de tropa y no refleja toda la expansión
-                requerida por la entrega final.
-            </problem>
-
-            <requiredChanges>
-
-                <change>
-                    Actualizar el class diagram después de completar
-                    las clases finales.
-                </change>
-
-                <change>
-                    El UML debe representar la jerarquía completa de tropas.
-                </change>
-
-                <change>
-                    El UML debe representar interfaces y sus implementaciones.
-                </change>
-
-                <change>
-                    El UML debe representar las relaciones principales entre
-                    application, battlefield, sorting y tropas.
-                </change>
-
-                <change>
-                    El UML no debe describir clases o responsabilidades
-                    que no existan en el código final.
-                </change>
-
-            </requiredChanges>
-
-        </section>
-
-
-        <!-- ========================================================= -->
-        <!-- 16. README / DOCUMENTACIÓN DEL REPOSITORIO               -->
-        <!-- ========================================================= -->
-
-        <section id="C16" name="README">
-
-            <target>
-                README.md,
-                README_ES.md
-            </target>
-
-            <problem>
-                La documentación actual describe el estado de milestone,
-                incluyendo algoritmos marcados como stubs y solo tres tipos
-                de unidades.
-            </problem>
-
-            <requiredChanges>
-
-                <change>
-                    Actualizar la documentación para representar el estado
-                    real de la entrega final.
-                </change>
-
-                <change>
-                    Eliminar afirmaciones que indiquen que Quick, Merge,
-                    Heap, Counting o Radix son funcionalidades pendientes
-                    cuando ya estén implementadas.
-                </change>
-
-                <change>
-                    Documentar todos los tipos de tropa soportados.
-                </change>
-
-                <change>
-                    Documentar correctamente los parámetros CLI finales.
-                </change>
-
-                <change>
-                    Incluir ejemplos válidos y ejemplos de error.
-                </change>
-
-            </requiredChanges>
+        <section id="exceptions">
+
+            <title>Verificar propagación y uso de excepciones</title>
+
+            <requiredAction>
+                Asegurar que las excepciones existentes realmente se utilicen
+                cuando corresponde y no existan clases de excepción sin propósito.
+            </requiredAction>
+
+            <rules>
+                <rule>
+                    Invalid algorithm must produce a controlled error.
+                </rule>
+                <rule>
+                    Invalid battlefield size must produce a controlled error.
+                </rule>
+                <rule>
+                    Invalid command/parameter must produce a controlled error.
+                </rule>
+                <rule>
+                    Invalid formation must produce a controlled error.
+                </rule>
+                <rule>
+                    User input errors must not generate an uncontrolled stack trace
+                    during normal execution.
+                </rule>
+            </rules>
 
         </section>
 
     </sectionsToCorrect>
 
 
-    <!-- ============================================================ -->
-    <!-- SECCIONES A AÑADIR                                          -->
-    <!-- ============================================================ -->
-
     <sectionsToAdd>
 
         <!-- ========================================================= -->
-        <!-- 1. SOPORTE COMPLETO DE TIPOS DE TROPA                    -->
+        <!-- 1. COBERTURA DE PRUEBAS                                 -->
         <!-- ========================================================= -->
 
-        <section id="A01" name="Implementación completa de tropas">
+        <section id="tests">
 
-            <purpose>
-                Completar el modelo requerido por la entrega final.
-            </purpose>
+            <title>Agregar pruebas de integración y edge cases</title>
 
-            <classes>
-
-                <class>Commander</class>
-                <class>Medic</class>
-                <class>Tank</class>
-                <class>Sniper</class>
-                <class>Infantry</class>
-                <class>Engineer</class>
-                <class>Artillery</class>
-                <class>AntiAircraft</class>
-
-            </classes>
-
-            <requirements>
-
-                <requirement>
-                    Todas las clases deben heredar de Troop.
-                </requirement>
-
-                <requirement>
-                    Cada tipo debe poseer un rango definido.
-                </requirement>
-
-                <requirement>
-                    Cada unidad debe poseer una representación visual
-                    identificable.
-                </requirement>
-
-                <requirement>
-                    Las diferencias entre tipos deben estar justificadas
-                    mediante atributos o comportamiento.
-                </requirement>
-
-            </requirements>
-
-        </section>
-
-
-        <!-- ========================================================= -->
-        <!-- 2. ATRIBUTO RANGE                                        -->
-        <!-- ========================================================= -->
-
-        <section id="A02" name="Rango de tropas">
-
-            <purpose>
-                Hacer explícito el atributo utilizado como criterio
-                de organización de la entrega final.
-            </purpose>
-
-            <requirements>
-
-                <requirement>
-                    Troop debe exponer el rango de forma controlada.
-                </requirement>
-
-                <requirement>
-                    Las subclases deben definir su rango de acuerdo
-                    con su especialización.
-                </requirement>
-
-                <requirement>
-                    El comparador de sorting debe basarse en este dato
-                    cuando ese sea el criterio final establecido.
-                </requirement>
-
-            </requirements>
-
-        </section>
-
-
-        <!-- ========================================================= -->
-        <!-- 3. CATÁLOGO DE ALGORITMOS COMPLETO                       -->
-        <!-- ========================================================= -->
-
-        <section id="A03" name="Sorting catalog completo">
-
-            <purpose>
-                Convertir el catálogo actual de estrategias en un
-                catálogo completamente funcional.
-            </purpose>
-
-            <requiredImplementations>
-
-                <algorithm key="b">Bubble Sort</algorithm>
-                <algorithm key="i">Insertion Sort</algorithm>
-                <algorithm key="s">Selection Sort</algorithm>
-                <algorithm key="m">Merge Sort</algorithm>
-
-            </requiredImplementations>
-
-            <recommendedImplementations>
-
-                <algorithm key="q">Quick Sort</algorithm>
-                <algorithm key="h">Heap Sort</algorithm>
-                <algorithm key="c">Counting Sort</algorithm>
-                <algorithm key="r">Radix Sort</algorithm>
-
-            </recommendedImplementations>
-
-            <constraint>
-                Como mínimo cuatro algoritmos deben estar completamente
-                implementados y seleccionables mediante CLI.
-            </constraint>
-
-        </section>
-
-
-        <!-- ========================================================= -->
-        <!-- 4. TESTS                                                  -->
-        <!-- ========================================================= -->
-
-        <section id="A04" name="Pruebas automatizadas o reproducibles">
-
-            <purpose>
-                Añadir una capa de verificación que permita demostrar
-                que cada parte crítica cumple el comportamiento esperado.
-            </purpose>
+            <requiredAction>
+                Incrementar la cobertura enfocándose en comportamiento exigido por
+                la especificación final, no en cobertura artificial de líneas.
+            </requiredAction>
 
             <testGroups>
 
-                <group name="parser">
-
-                    <test>
-                        Parámetros válidos.
-                    </test>
-
-                    <test>
-                        Parámetros faltantes.
-                    </test>
-
-                    <test>
-                        Formato key=value inválido.
-                    </test>
-
-                    <test>
-                        Valores desconocidos.
-                    </test>
-
-                </group>
-
-                <group name="validator">
-
-                    <test>
-                        f menor que 5.
-                    </test>
-
-                    <test>
-                        f mayor que 1000.
-                    </test>
-
-                    <test>
-                        exceso de tropas.
-                    </test>
-
-                    <test>
-                        grupo mayor que N.
-                    </test>
-
-                    <test>
-                        demasiados grupos respecto al número de líneas.
-                    </test>
-
-                </group>
-
-                <group name="sorting">
-
-                    <test>
-                        Lista vacía.
-                    </test>
-
-                    <test>
-                        Una sola tropa.
-                    </test>
-
-                    <test>
-                        Elementos ya ordenados.
-                    </test>
-
-                    <test>
-                        Elementos en orden inverso.
-                    </test>
-
-                    <test>
-                        Elementos con el mismo criterio.
-                    </test>
-
-                    <test>
-                        Validación de resultado para cada algoritmo implementado.
-                    </test>
-
-                </group>
-
                 <group name="battlefield">
-
-                    <test>
-                        Posición dentro del rango.
-                    </test>
-
-                    <test>
-                        Posición fuera del rango.
-                    </test>
-
-                    <test>
-                        Colisión.
-                    </test>
-
-                    <test>
-                        Capacidad total.
-                    </test>
-
+                    <test>minimum valid size</test>
+                    <test>maximum valid size</test>
+                    <test>below minimum</test>
+                    <test>above maximum</test>
+                    <test>capacity exceeded</test>
                 </group>
 
                 <group name="formation">
+                    <test>single troop type</test>
+                    <test>multiple troop types</test>
+                    <test>exact line capacity</test>
+                    <test>line capacity exceeded</test>
+                    <test>too many groups</test>
+                    <test>all orientations</test>
+                </group>
 
-                    <test>
-                        Orientación north.
-                    </test>
+                <group name="sorting">
+                    <test>all algorithms ascending</test>
+                    <test>all algorithms descending</test>
+                    <test>duplicate ranges</test>
+                    <test>single element</test>
+                    <test>large dataset</test>
+                </group>
 
-                    <test>
-                        Orientación south.
-                    </test>
+                <group name="deployment">
+                    <test>no duplicate positions</test>
+                    <test>all troops deployed</test>
+                    <test>all troops preserved after formation</test>
+                </group>
 
-                    <test>
-                        Orientación east.
-                    </test>
-
-                    <test>
-                        Orientación west.
-                    </test>
-
-                    <test>
-                        Separación estricta de tipos por línea.
-                    </test>
-
+                <group name="cli">
+                    <test>valid arguments</test>
+                    <test>missing arguments</test>
+                    <test>invalid arguments</test>
+                    <test>invalid troop quantities</test>
                 </group>
 
             </testGroups>
@@ -1316,220 +432,262 @@
 
 
         <!-- ========================================================= -->
-        <!-- 5. MATRIZ DE TRAZABILIDAD                                -->
+        <!-- 2. REGRESIÓN DEL MIDTERM                                 -->
         <!-- ========================================================= -->
 
-        <section id="A05" name="Trazabilidad">
+        <section id="midterm-regression">
 
-            <purpose>
-                Relacionar cada requisito del Capstone con una parte concreta
-                del código para facilitar revisión y defensa del proyecto.
-            </purpose>
+            <title>Preservar comportamiento aprobado</title>
 
-            <requirements>
+            <requiredAction>
+                Crear pruebas de regresión para las funcionalidades que ya existían
+                en la entrega evaluada con 200/200.
+            </requiredAction>
 
-                <requirement>
-                    Cada requisito funcional debe poder asociarse con al menos
-                    una clase, método o módulo.
-                </requirement>
-
-                <requirement>
-                    Cada algoritmo requerido debe estar asociado con su
-                    estrategia correspondiente.
-                </requirement>
-
-                <requirement>
-                    Cada parámetro CLI debe tener parser, validación y
-                    consumidor correspondiente.
-                </requirement>
-
-                <requirement>
-                    Cada orientación debe poder relacionarse con la lógica
-                    de FormationArranger.
-                </requirement>
-
-            </requirements>
+            <rule>
+                Ninguna modificación del final debe romper comportamiento previamente
+                validado.
+            </rule>
 
         </section>
 
 
         <!-- ========================================================= -->
-        <!-- 6. CASOS OFICIALES DE VALIDACIÓN                         -->
+        <!-- 3. DOCUMENTACIÓN                                         -->
         <!-- ========================================================= -->
 
-        <section id="A06" name="Casos de aceptación">
+        <section id="documentation">
 
-            <purpose>
-                Añadir escenarios de aceptación que el agente debe ejecutar
-                antes de considerar terminada la implementación.
-            </purpose>
+            <title>Actualizar documentación para reflejar implementación real</title>
 
-            <cases>
+            <requiredAction>
+                Revisar y sincronizar README, documentación técnica y ejemplos
+                de ejecución.
+            </requiredAction>
 
-                <case id="AC01">
-                    <description>
-                        Ejecución válida utilizando Bubble Sort.
-                    </description>
-                    <expected>
-                        Configuración válida, despliegue aleatorio,
-                        sorting exitoso y formación final válida.
-                    </expected>
-                </case>
+            <mustDocument>
+                <item>all supported parameters</item>
+                <item>parameter defaults</item>
+                <item>valid parameter values</item>
+                <item>troop order in u</item>
+                <item>battlefield size constraints</item>
+                <item>sorting criterion</item>
+                <item>orientation behavior</item>
+                <item>formation rules</item>
+                <item>invalid configuration examples</item>
+                <item>execution examples</item>
+            </mustDocument>
 
-                <case id="AC02">
-                    <description>
-                        Ejecución válida utilizando Insertion Sort.
-                    </description>
-                    <expected>
-                        Resultado correctamente ordenado y renderizado.
-                    </expected>
-                </case>
-
-                <case id="AC03">
-                    <description>
-                        Ejecución válida utilizando un algoritmo divide-and-conquer.
-                    </description>
-                    <expected>
-                        El algoritmo debe producir exactamente la misma
-                        orden semántica que los demás algoritmos.
-                    </expected>
-                </case>
-
-                <case id="AC04">
-                    <description>
-                        Campo demasiado pequeño para el número de tropas.
-                    </description>
-                    <expected>
-                        Error controlado de battlefield/capacidad.
-                    </expected>
-                </case>
-
-                <case id="AC05">
-                    <description>
-                        Orientación inválida.
-                    </description>
-                    <expected>
-                        Error controlado de parámetro.
-                    </expected>
-                </case>
-
-                <case id="AC06">
-                    <description>
-                        Campo máximo válido de 1000x1000.
-                    </description>
-                    <expected>
-                        La configuración debe considerarse válida siempre
-                        que las demás restricciones también se cumplan.
-                    </expected>
-                </case>
-
-                <case id="AC07">
-                    <description>
-                        Ausencia de f.
-                    </description>
-                    <expected>
-                        Battlefield 10x10.
-                    </expected>
-                </case>
-
-            </cases>
+            <consistencyRule>
+                README y documentación no deben describir comportamientos
+                diferentes a los implementados.
+            </consistencyRule>
 
         </section>
 
 
         <!-- ========================================================= -->
-        <!-- 7. CONSISTENCIA DE SIMBOLOGÍA                            -->
+        <!-- 4. UML                                                   -->
         <!-- ========================================================= -->
 
-        <section id="A07" name="Catálogo de símbolos">
+        <section id="uml">
 
-            <purpose>
-                Establecer una representación uniforme de las tropas
-                en el battlefield.
-            </purpose>
+            <title>Actualizar UML respecto al código final</title>
 
-            <symbols>
+            <requiredAction>
+                Revisar los diagramas existentes para garantizar correspondencia
+                con las clases, relaciones y responsabilidades reales.
+            </requiredAction>
 
-                <troop type="Commander" symbol="C"/>
-                <troop type="Medic" symbol="M"/>
-                <troop type="Tank" symbol="T"/>
-                <troop type="Sniper" symbol="S"/>
-                <troop type="Infantry" symbol="I"/>
-                <troop type="Engineer" symbol="E"/>
-                <troop type="Artillery" symbol="A"/>
-                <troop type="AntiAircraft" symbol="R"/>
+            <diagrams>
+                <diagram>class diagram</diagram>
+                <diagram>use case diagram</diagram>
+                <diagram>sequence diagram</diagram>
+            </diagrams>
 
-            </symbols>
-
-            <empty symbol="*"/>
+            <rule>
+                El UML no debe representar clases, métodos o relaciones que
+                ya no existan en el código.
+            </rule>
 
         </section>
 
 
         <!-- ========================================================= -->
-        <!-- 8. VALIDACIÓN FINAL DEL REPOSITORIO                      -->
+        <!-- 5. TRACEABILITY                                          -->
         <!-- ========================================================= -->
 
-        <section id="A08" name="Final repository verification">
+        <section id="traceability">
 
-            <purpose>
-                Antes de considerar terminada la implementación,
-                el agente debe verificar el repositorio completo.
-            </purpose>
+            <title>Completar trazabilidad requisito → implementación → prueba</title>
 
-            <checks>
+            <requiredAction>
+                Revisar la matriz de trazabilidad existente y asegurar que cada
+                requisito importante del Capstone pueda relacionarse con:
+            </requiredAction>
 
-                <check>
-                    No quedan clases requeridas sin implementar.
-                </check>
+            <mapping>
+                <item>requirement</item>
+                <item>source code</item>
+                <item>test</item>
+                <item>documentation</item>
+            </mapping>
 
-                <check>
-                    No quedan estrategias requeridas que lancen
-                    UnsupportedOperationException.
-                </check>
+            <minimumRequirements>
+                <item>battlefield configuration</item>
+                <item>random deployment</item>
+                <item>no duplicate positions</item>
+                <item>troop type separation</item>
+                <item>orientation</item>
+                <item>sorting by range</item>
+                <item>minimum four sorting algorithms</item>
+                <item>validation</item>
+                <item>exception handling</item>
+            </minimumRequirements>
 
-                <check>
-                    No existen inconsistencias entre parser y validator.
-                </check>
+        </section>
 
-                <check>
-                    No existen restricciones de tamaño diferentes entre
-                    Battlefield, parser y validator.
-                </check>
 
-                <check>
-                    Todas las orientaciones funcionan.
-                </check>
+        <!-- ========================================================= -->
+        <!-- 6. CONSOLA / OUTPUT                                     -->
+        <!-- ========================================================= -->
 
-                <check>
-                    La formación final no mezcla tipos en una misma línea.
-                </check>
+        <section id="output">
 
-                <check>
-                    La matriz inicial contiene posiciones aleatorias.
-                </check>
+            <title>Verificar salida final de la aplicación</title>
 
-                <check>
-                    No existen colisiones iniciales.
-                </check>
+            <requiredAction>
+                Asegurar que la salida permita demostrar visualmente el cumplimiento
+                de los requisitos principales.
+            </requiredAction>
 
-                <check>
-                    La medición de performance se realiza únicamente
-                    alrededor del sorting.
-                </check>
+            <output>
+                <item>configuration used</item>
+                <item>initial battlefield</item>
+                <item>final battlefield</item>
+                <item>selected sorting algorithm</item>
+                <item>sorting execution time</item>
+            </output>
 
-                <check>
-                    El UML representa realmente el código.
-                </check>
-
-                <check>
-                    README y documentación describen el estado real.
-                </check>
-
-            </checks>
+            <rule>
+                El contenido mostrado debe ser consistente con la configuración
+                realmente utilizada.
+            </rule>
 
         </section>
 
     </sectionsToAdd>
 
-</repositoryUpdateSpecification>
+
+    <doNotChangeWithoutNeed>
+
+        <item>
+            No reemplazar la arquitectura actual únicamente por utilizar
+            otra estructura de paquetes.
+        </item>
+
+        <item>
+            No eliminar funcionalidades que ya funcionan correctamente.
+        </item>
+
+        <item>
+            No reducir los ocho algoritmos a cuatro.
+            El requisito mínimo es cuatro y la implementación actual ofrece más.
+        </item>
+
+        <item>
+            No reducir los ocho tipos de tropa a cinco.
+        </item>
+
+        <item>
+            No introducir patrones de diseño adicionales únicamente para
+            aparentar mayor complejidad.
+        </item>
+
+        <item>
+            No reemplazar Battlefield, FormationArranger, TroopFactory,
+            ParameterParser, ParameterValidator o las estrategias de sorting
+            si ya cumplen su responsabilidad.
+        </item>
+
+        <item>
+            No modificar comportamiento existente sin crear primero una prueba
+            que documente el comportamiento deseado.
+        </item>
+
+    </doNotChangeWithoutNeed>
+
+
+    <finalValidation>
+
+        <phase number="1">
+            Compilar completamente el proyecto desde cero.
+        </phase>
+
+        <phase number="2">
+            Ejecutar todas las pruebas automatizadas.
+        </phase>
+
+        <phase number="3">
+            Ejecutar manualmente ejemplos válidos de la especificación.
+        </phase>
+
+        <phase number="4">
+            Ejecutar manualmente ejemplos inválidos.
+        </phase>
+
+        <phase number="5">
+            Comprobar las cuatro orientaciones.
+        </phase>
+
+        <phase number="6">
+            Comprobar los ocho algoritmos.
+        </phase>
+
+        <phase number="7">
+            Verificar que todos ordenan por range.
+        </phase>
+
+        <phase number="8">
+            Verificar que la formación nunca mezcla tipos de tropa en una línea.
+        </phase>
+
+        <phase number="9">
+            Revisar README, UML y trazabilidad contra el código definitivo.
+        </phase>
+
+        <phase number="10">
+            Confirmar que ninguna corrección haya regresado funcionalidades
+            previamente aprobadas.
+        </phase>
+
+    </finalValidation>
+
+
+    <definitionOfDone>
+
+        <functional>
+            Todos los requisitos funcionales del Capstone están implementados
+            y comprobados.
+        </functional>
+
+        <quality>
+            Los casos límite principales están cubiertos mediante pruebas.
+        </quality>
+
+        <documentation>
+            Código, README, UML y trazabilidad describen el mismo comportamiento.
+        </documentation>
+
+        <regression>
+            Las funcionalidades aprobadas en el midterm continúan funcionando.
+        </regression>
+
+        <architecture>
+            La arquitectura existente se conserva salvo modificaciones
+            justificadas por requisitos reales.
+        </architecture>
+
+    </definitionOfDone>
+
+</legionFinalizationPlan>

@@ -3,6 +3,7 @@ package legion.test;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import legion.sorting.SortDirection;
 import legion.sorting.SortingAlgorithm;
 import legion.sorting.SortingStrategy;
 import legion.sorting.TroopComparator;
@@ -40,6 +41,14 @@ public class SortingTests {
             });
             report.check(strategy.getName() + " sorts a list where every range is equal", () ->
                     isSorted(strategy.sort(sameRangeList())));
+            report.check(strategy.getName() + " sorts a list mixing the minimum and maximum range", () ->
+                    isSorted(strategy.sort(extremeRangeList())));
+            report.check(strategy.getName() + " sorts a large dataset", () ->
+                    isSorted(strategy.sort(largeList())));
+            report.check(strategy.getName() + " orders by range and not by health", () -> {
+                List<Troop> sorted = strategy.sort(rangeAgainstHealthList());
+                return identifiers(sorted).equals(List.of("T-1", "R-1", "S-1"));
+            });
             report.check(strategy.getName() + " does not modify the received list", () -> {
                 List<Troop> original = mixedList();
                 List<Troop> snapshot = new ArrayList<>(original);
@@ -47,16 +56,25 @@ public class SortingTests {
                 return original.equals(snapshot);
             });
         }
-        report.check("every algorithm produces the same order for the same input", () -> {
-            List<Troop> source = mixedList();
-            List<String> reference = identifiers(SortingAlgorithm.BUBBLE.createStrategy().sort(source));
-            for (SortingAlgorithm algorithm : SortingAlgorithm.values()) {
-                if (!identifiers(algorithm.createStrategy().sort(source)).equals(reference)) {
-                    return false;
-                }
+        report.check("every algorithm produces the same ascending order for the same input", () ->
+                sameOrder(SortDirection.ASCENDING, mixedList()));
+        report.check("every algorithm produces the same descending order for the same input", () ->
+                sameOrder(SortDirection.DESCENDING, mixedList()));
+        report.check("every algorithm agrees on a dataset with repeated ranges", () ->
+                sameOrder(SortDirection.ASCENDING, largeList()));
+    }
+
+    private boolean sameOrder(SortDirection direction, List<Troop> source) {
+        List<String> reference = identifiers(
+                direction.apply(SortingAlgorithm.BUBBLE.createStrategy().sort(source)));
+        for (SortingAlgorithm algorithm : SortingAlgorithm.values()) {
+            List<String> current = identifiers(
+                    direction.apply(algorithm.createStrategy().sort(source)));
+            if (!current.equals(reference)) {
+                return false;
             }
-            return true;
-        });
+        }
+        return true;
     }
 
     private List<String> identifiers(List<Troop> troops) {
@@ -94,6 +112,32 @@ public class SortingTests {
         troops.add(factory.create(TroopType.INFANTRY, 1));
         troops.add(factory.create(TroopType.TANK, 1));
         troops.add(factory.create(TroopType.INFANTRY, 2));
+        return troops;
+    }
+
+    private List<Troop> extremeRangeList() {
+        List<Troop> troops = new ArrayList<>();
+        troops.add(factory.create(TroopType.ARTILLERY, 1));
+        troops.add(factory.create(TroopType.MEDIC, 1));
+        troops.add(factory.create(TroopType.ARTILLERY, 2));
+        troops.add(factory.create(TroopType.ENGINEER, 1));
+        return troops;
+    }
+
+    private List<Troop> largeList() {
+        List<Troop> troops = new ArrayList<>();
+        TroopType[] types = TroopType.deploymentOrder();
+        for (int number = 1; number <= 200; number++) {
+            troops.add(factory.create(types[number % types.length], number));
+        }
+        return troops;
+    }
+
+    private List<Troop> rangeAgainstHealthList() {
+        List<Troop> troops = new ArrayList<>();
+        troops.add(factory.create(TroopType.SNIPER, 1));
+        troops.add(factory.create(TroopType.TANK, 1));
+        troops.add(factory.create(TroopType.ANTI_AIRCRAFT, 1));
         return troops;
     }
 

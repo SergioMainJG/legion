@@ -22,6 +22,8 @@ public final class TestRunner {
         new SortingTests().register(report);
         new BattlefieldTests().register(report);
         new FormationTests().register(report);
+        new DeploymentTests().register(report);
+        new RegressionTests().register(report);
         report.summarise();
         if (report.hasFailures()) {
             System.exit(1);
